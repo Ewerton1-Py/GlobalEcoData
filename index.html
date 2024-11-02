@@ -27,7 +27,7 @@
             height: 500px;
             width: 50%;
         }
-        .submit-button {
+        .submit-button, .google-form-button {
             background-color: #4CAF50;
             color: white;
             padding: 10px 20px;
@@ -37,7 +37,7 @@
             text-align: center;
             margin-top: 10px;
         }
-        .submit-button:hover {
+        .submit-button:hover, .google-form-button:hover {
             background-color: #45a049;
         }
         #chartContainer {
@@ -109,6 +109,13 @@
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
             <button id="downloadCSV" class="submit-button">Download CSV</button>
             <button id="downloadPDF" class="submit-button">Download PDF</button>
+
+            <h2>Submit Data via Google Form</h2>
+            <!-- Embedded Google Form -->
+            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform?embedded=true" 
+                    width="100%" height="800" frameborder="0" marginheight="0" marginwidth="0">
+                Loading…
+            </iframe>
 
             <h2>Environmental Analysis Map</h2>
         </div>
@@ -219,54 +226,6 @@
                         }
                     }
                 }
-            });
-        }
-
-        document.getElementById('downloadCSV').addEventListener('click', function() {
-            const filteredData = getFilteredData();
-            const csvContent = "data:text/csv;charset=utf-8," 
-                + filteredData.map(e => `${e.year},${e.analyte},${e.environment},${e.concentration},${e.lat},${e.lng},${e.zone},${e.continent}`).join("\n");
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "data_report.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            showNotification("CSV report downloaded.");
-        });
-
-        document.getElementById('downloadPDF').addEventListener('click', function() {
-            const filteredData = getFilteredData();
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Data Report", 10, 10);
-            let y = 20;
-            filteredData.forEach(entry => {
-                doc.text(`${entry.year} | ${entry.analyte} | ${entry.environment} | ${entry.concentration} | ${entry.lat} | ${entry.lng} | ${entry.zone} | ${entry.continent}`, 10, y);
-                y += 10;
-            });
-            doc.save('data_report.pdf');
-
-            showNotification("PDF report downloaded.");
-        });
-
-        function getFilteredData() {
-            const selectedAnalyte = document.getElementById('analyte').value;
-            const selectedEnvironment = document.getElementById('environment').value;
-            const enteredYear = document.getElementById('year').value;
-            const selectedZone = document.getElementById('zone').value;
-            const selectedContinent = document.getElementById('continent').value;
-
-            return dataEntries.filter(entry => {
-                const matchesAnalyte = !selectedAnalyte || entry.analyte === selectedAnalyte;
-                const matchesEnvironment = !selectedEnvironment || entry.environment === selectedEnvironment;
-                const matchesYear = !enteredYear || entry.year.toString() === enteredYear;
-                const matchesZone = !selectedZone || entry.zone === selectedZone;
-                const matchesContinent = !selectedContinent || entry.continent === selectedContinent;
-
-                return matchesAnalyte && matchesEnvironment && matchesYear && matchesZone && matchesContinent;
             });
         }
     </script>
