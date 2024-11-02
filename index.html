@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .container {
             display: flex;
@@ -68,7 +69,32 @@
             <label for="year">Enter Year:</label>
             <input type="text" id="year" placeholder="e.g., 2020">
 
+            <label for="zone">Select Zone:</label>
+            <select id="zone">
+                <option value="">All</option>
+                <option value="Arctic Circle">Arctic Circle</option>
+                <option value="Temperature Zone">Temperature Zone</option>
+                <option value="Subtropics">Subtropics</option>
+                <option value="Tropics">Tropics</option>
+                <option value="Antarctic Zone">Antarctic Zone</option>
+                <option value="Frigid Zone">Frigid Zone</option>
+            </select>
+
+            <label for="continent">Select Continent:</label>
+            <select id="continent">
+                <option value="">All</option>
+                <option value="Africa">Africa</option>
+                <option value="Asia">Asia</option>
+                <option value="Europe">Europe</option>
+                <option value="North America">North America</option>
+                <option value="Oceania">Oceania</option>
+                <option value="South America">South America</option>
+                <option value="Antarctica">Antarctica</option>
+            </select>
+
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
+            <button id="downloadCSV" class="submit-button">Download CSV</button>
+            <button id="downloadPDF" class="submit-button">Download PDF</button>
 
             <h2>Environmental Analysis Map</h2>
         </div>
@@ -83,10 +109,10 @@
     <script>
         // Dummy data for demonstration
         const dataEntries = [
-            { year: 2020, analyte: 'PAHs', environment: 'Water', concentration: 5.2, lat: 34.05, lng: -118.25 },
-            { year: 2021, analyte: 'Alkanes', environment: 'Soil', concentration: 3.4, lat: 40.71, lng: -74.00 },
-            { year: 2020, analyte: 'Sterols', environment: 'Groundwater', concentration: 2.1, lat: 37.77, lng: -122.42 },
-            { year: 2022, analyte: 'Pesticides', environment: 'Water', concentration: 4.8, lat: 34.05, lng: -118.25 },
+            { year: 2020, analyte: 'PAHs', environment: 'Water', concentration: 5.2, lat: 34.05, lng: -118.25, zone: 'Temperature Zone', continent: 'North America' },
+            { year: 2021, analyte: 'Alkanes', environment: 'Soil', concentration: 3.4, lat: 40.71, lng: -74.00, zone: 'Temperature Zone', continent: 'North America' },
+            { year: 2020, analyte: 'Sterols', environment: 'Groundwater', concentration: 2.1, lat: 37.77, lng: -122.42, zone: 'Frigid Zone', continent: 'North America' },
+            { year: 2022, analyte: 'Pesticides', environment: 'Water', concentration: 4.8, lat: 34.05, lng: -118.25, zone: 'Tropics', continent: 'North America' },
             // Add more entries as needed
         ];
 
@@ -118,13 +144,17 @@
             const selectedAnalyte = document.getElementById('analyte').value;
             const selectedEnvironment = document.getElementById('environment').value;
             const enteredYear = document.getElementById('year').value;
+            const selectedZone = document.getElementById('zone').value;
+            const selectedContinent = document.getElementById('continent').value;
 
             const filteredData = dataEntries.filter(entry => {
                 const matchesAnalyte = !selectedAnalyte || entry.analyte === selectedAnalyte;
                 const matchesEnvironment = !selectedEnvironment || entry.environment === selectedEnvironment;
                 const matchesYear = !enteredYear || entry.year.toString() === enteredYear;
+                const matchesZone = !selectedZone || entry.zone === selectedZone;
+                const matchesContinent = !selectedContinent || entry.continent === selectedContinent;
 
-                return matchesAnalyte && matchesEnvironment && matchesYear;
+                return matchesAnalyte && matchesEnvironment && matchesYear && matchesZone && matchesContinent;
             });
 
             // Clear previous markers and heatmap
@@ -167,6 +197,50 @@
                         }
                     }
                 }
+            });
+        }
+
+        document.getElementById('downloadCSV').addEventListener('click', function() {
+            const filteredData = getFilteredData();
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + filteredData.map(e => `${e.year},${e.analyte},${e.environment},${e.concentration},${e.lat},${e.lng},${e.zone},${e.continent}`).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "data_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        document.getElementById('downloadPDF').addEventListener('click', function() {
+            const filteredData = getFilteredData();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Data Report", 10, 10);
+            let y = 20;
+            filteredData.forEach(entry => {
+                doc.text(`${entry.year} | ${entry.analyte} | ${entry.environment} | ${entry.concentration} | ${entry.lat} | ${entry.lng} | ${entry.zone} | ${entry.continent}`, 10, y);
+                y += 10;
+            });
+            doc.save('data_report.pdf');
+        });
+
+        function getFilteredData() {
+            const selectedAnalyte = document.getElementById('analyte').value;
+            const selectedEnvironment = document.getElementById('environment').value;
+            const enteredYear = document.getElementById('year').value;
+            const selectedZone = document.getElementById('zone').value;
+            const selectedContinent = document.getElementById('continent').value;
+
+            return dataEntries.filter(entry => {
+                const matchesAnalyte = !selectedAnalyte || entry.analyte === selectedAnalyte;
+                const matchesEnvironment = !selectedEnvironment || entry.environment === selectedEnvironment;
+                const matchesYear = !enteredYear || entry.year.toString() === enteredYear;
+                const matchesZone = !selectedZone || entry.zone === selectedZone;
+                const matchesContinent = !selectedContinent || entry.continent === selectedContinent;
+
+                return matchesAnalyte && matchesEnvironment && matchesYear && matchesZone && matchesContinent;
             });
         }
     </script>
