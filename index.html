@@ -5,33 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Contributions</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Flexbox container for form and map */
+        .container {
+            display: flex;
+            justify-content: space-between; /* Space between items */
+            align-items: flex-start; /* Align items at the start */
+        }
+        /* Style for the form */
+        .form-container {
+            width: 50%; /* Adjust width as needed */
+            padding-right: 20px; /* Space between form and map */
+        }
+        /* Style for the map */
+        #map {
+            height: 500px; /* Set height for the map */
+            width: 50%; /* Adjust width as needed */
+        }
+    </style>
 </head>
 <body>
     <h1>Submit Your Research</h1>
-    <p>We welcome contributions from researchers. Please fill out the form below:</p>
-    
-    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform?embedded=true" width="640" height="1357" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+    <div class="container">
+        <div class="form-container">
+            <p>We welcome contributions from researchers. Please fill out the form below:</p>
+            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform?embedded=true" width="100%" height="1357" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
 
-    <h1>Environmental Analysis Map</h1>
+            <h1>Environmental Analysis Map</h1>
 
-    <label for="analyte">Select Analyte:</label>
-    <select id="analyte">
-        <option value="pah">PAH</option>
-        <option value="alkanes">Alkanes</option>
-        <option value="sterols">Sterols</option>
-        <option value="pesticides">Pesticides</option>
-    </select>
+            <label for="analyte">Select Analyte:</label>
+            <select id="analyte">
+                <option value="pah">PAH</option>
+                <option value="alkanes">Alkanes</option>
+                <option value="sterols">Sterols</option>
+                <option value="pesticides">Pesticides</option>
+            </select>
 
-    <label for="environment">Select Environment:</label>
-    <select id="environment">
-        <option value="water">Water</option>
-        <option value="soil">Soil</option>
-        <option value="sediment">Sediment</option>
-        <option value="groundwater">Ground Water</option>
-        <option value="surficial">Surficial Particulate Matter</option>
-    </select>
+            <label for="environment">Select Environment:</label>
+            <select id="environment">
+                <option value="water">Water</option>
+                <option value="soil">Soil</option>
+                <option value="sediment">Sediment</option>
+                <option value="groundwater">Ground Water</option>
+                <option value="surficial">Surficial Particulate Matter</option>
+            </select>
+        </div>
 
-    <div id="map" style="height: 500px;"></div> <!-- Make sure to set height -->
+        <div id="map"></div> <!-- Map on the right -->
+    </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
