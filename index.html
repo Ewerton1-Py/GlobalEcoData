@@ -110,7 +110,6 @@
             <button id="downloadCSV" class="submit-button">Download CSV</button>
             <button id="downloadPDF" class="submit-button">Download PDF</button>
 
-            <!-- Google Form Link Button -->
             <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform', '_blank')" class="google-form-button">
                 Submit Data via Google Form
             </button>
@@ -119,10 +118,6 @@
         </div>
 
         <div id="map"></div>
-    </div>
-
-    <div id="chartContainer">
-        <canvas id="concentrationChart"></canvas>
     </div>
 
     <div id="chartContainer">
@@ -169,6 +164,53 @@
             }, 3000);
         }
 
+        function plotChart(filteredData) {
+            // Clear previous chart if it exists
+            const chartContainer = document.getElementById('chartContainer');
+            chartContainer.innerHTML = '<canvas id="concentrationChart"></canvas>';
+            
+            const years = filteredData.map(entry => entry.year);
+            const concentrations = filteredData.map(entry => entry.concentration);
+
+            const ctx = document.getElementById('concentrationChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Concentration Trend',
+                        data: concentrations,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Concentration (µg/g)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Concentration Trend for ${filteredData[0]?.analyte || 'All Compounds'} in ${filteredData[0]?.environment || 'All Environments'}`
+                        }
+                    }
+                }
+            });
+        }
+
         document.getElementById('loadEntries').addEventListener('click', function() {
             const selectedAnalyte = document.getElementById('analyte').value;
             const selectedEnvironment = document.getElementById('environment').value;
@@ -199,37 +241,12 @@
             // Add new markers and heatmap based on filtered data
             addMarkers(filteredData);
             createHeatmap(filteredData);
+
+            // Plot the chart for the specific analyte/environment combination
             plotChart(filteredData);
 
             showNotification(`Loaded ${filteredData.length} entries.`);
         });
-
-        function plotChart(filteredData) {
-            const years = filteredData.map(entry => entry.year);
-            const concentrations = filteredData.map(entry => entry.concentration);
-
-            const ctx = document.getElementById('concentrationChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        label: 'Average Concentration',
-                        data: concentrations,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 2,
-                        fill: false
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
     </script>
 </body>
 </html>
