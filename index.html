@@ -7,25 +7,21 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Flexbox container for form and map */
         .container {
             display: flex;
-            justify-content: space-between; /* Space between items */
-            align-items: flex-start; /* Align items at the start */
+            justify-content: space-between;
+            align-items: flex-start;
         }
-        /* Style for the form */
         .form-container {
-            width: 50%; /* Adjust width as needed */
-            padding-right: 20px; /* Space between form and map */
+            width: 50%;
+            padding-right: 20px;
         }
-        /* Style for the map */
         #map {
-            height: 500px; /* Set height for the map */
-            width: 50%; /* Adjust width as needed */
+            height: 500px;
+            width: 50%;
         }
-        /* Button style */
         .submit-button {
-            background-color: #4CAF50; /* Green */
+            background-color: #4CAF50;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -36,7 +32,6 @@
         .submit-button:hover {
             background-color: #45a049;
         }
-        /* Chart container */
         #chartContainer {
             width: 100%;
             height: 400px;
@@ -51,6 +46,7 @@
             
             <label for="analyte">Select Analyte:</label>
             <select id="analyte">
+                <option value="">All</option>
                 <option value="PAHs">PAHs</option>
                 <option value="Alkanes">Alkanes</option>
                 <option value="Sterols">Sterols</option>
@@ -59,90 +55,72 @@
 
             <label for="environment">Select Environment:</label>
             <select id="environment">
+                <option value="">All</option>
                 <option value="Water">Water</option>
                 <option value="Groundwater">Groundwater</option>
                 <option value="Suspended Particulate Matter">Suspended Particulate Matter</option>
                 <option value="Soil">Soil</option>
             </select>
 
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform" target="_blank" class="submit-button">Submit Research Paper</a>
+            <label for="year">Enter Year:</label>
+            <input type="text" id="year" placeholder="e.g., 2020">
+
+            <button id="loadEntries" class="submit-button">Load Approved Entries</button>
 
             <h2>Environmental Analysis Map</h2>
-            <button id="loadEntries">Load Approved Entries</button>
         </div>
 
-        <div id="map"></div> <!-- Map on the right -->
+        <div id="map"></div>
     </div>
 
     <div id="chartContainer">
         <canvas id="concentrationChart"></canvas>
     </div>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // Initialize the map
-        var map = L.map('map').setView([20, 0], 2); // Centered globally
+        // Dummy data for demonstration
+        const dataEntries = [
+            { year: 2020, analyte: 'PAHs', environment: 'Water', concentration: 5.2 },
+            { year: 2021, analyte: 'Alkanes', environment: 'Soil', concentration: 3.4 },
+            { year: 2020, analyte: 'Sterols', environment: 'Groundwater', concentration: 2.1 },
+            { year: 2022, analyte: 'Pesticides', environment: 'Water', concentration: 4.8 },
+            // Add more entries as needed
+        ];
 
-        // Add OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Load approved entries from Google Sheets
         document.getElementById('loadEntries').addEventListener('click', function() {
-            fetch('YOUR_GOOGLE_SHEET_PUBLIC_URL') // Replace with your Google Sheets URL
-                .then(response => response.json())
-                .then(data => {
-                    const years = [];
-                    const concentrations = [];
+            const selectedAnalyte = document.getElementById('analyte').value;
+            const selectedEnvironment = document.getElementById('environment').value;
+            const enteredYear = document.getElementById('year').value;
 
-                    data.forEach(entry => {
-                        const year = entry[4]; // Assuming year is in the fifth column
-                        const concentration = parseFloat(entry[5]); // Assuming average concentration is in the sixth column
-                        const link = entry[0]; // Assuming link is in the first column
-                        const analyte = entry[1]; // Assuming analyte is in the second column
-                        const environment = entry[2]; // Assuming environment is in the third column
-                        const coords = entry[3].split(','); // Assuming coordinates are in the fourth column
+            const filteredData = dataEntries.filter(entry => {
+                const matchesAnalyte = !selectedAnalyte || entry.analyte === selectedAnalyte;
+                const matchesEnvironment = !selectedEnvironment || entry.environment === selectedEnvironment;
+                const matchesYear = !enteredYear || entry.year.toString() === enteredYear;
 
-                        // Add to map markers
-                        if (coords.length === 2) {
-                            const lat = parseFloat(coords[0]);
-                            const long = parseFloat(coords[1]);
-                            const marker = L.marker([lat, long]).addTo(map);
-                            marker.bindPopup(`<a href="${link}" target="_blank">${analyte} in ${environment}</a>`);
-                        }
+                return matchesAnalyte && matchesEnvironment && matchesYear;
+            });
 
-                        // Collect data for chart
-                        if (year && !isNaN(concentration)) {
-                            years.push(year);
-                            concentrations.push(concentration);
-                        }
-                    });
-
-                    // Plot the chart
-                    plotChart(years, concentrations);
-                })
-                .catch(error => console.error('Error fetching data:', error));
+            plotChart(filteredData);
         });
 
-        function plotChart(years, concentrations) {
+        function plotChart(filteredData) {
+            const years = filteredData.map(entry => entry.year);
+            const concentrations = filteredData.map(entry => entry.concentration);
+
             const ctx = document.getElementById('concentrationChart').getContext('2d');
-            const chart = new Chart(ctx, {
-                type: 'line', // Change to 'bar' for a bar chart
+            new Chart(ctx, {
+                type: 'line',
                 data: {
                     labels: years,
                     datasets: [{
-                        label: 'Average Concentration (ug/g or ug/L)',
+                        label: 'Average Concentration',
                         data: concentrations,
                         borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
                         borderWidth: 2,
-                        fill: true
+                        fill: false
                     }]
                 },
                 options: {
-                    responsive: true,
                     scales: {
                         y: {
                             beginAtZero: true
