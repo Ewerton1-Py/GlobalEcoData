@@ -137,13 +137,18 @@
             maxZoom: 19,
         }).addTo(map);
 
-        // Function to add markers to the map
-        function addMarkers(entries) {
-            entries.forEach(entry => {
-                const marker = L.marker([entry.lat, entry.lng]).addTo(map)
-                    .bindPopup(`${entry.analyte}<br>${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
-            });
-        }
+        // Function to add markers to the map and adjust view to show all markers
+function addMarkers(entries) {
+    const markerGroup = L.featureGroup();
+    
+    entries.forEach(entry => {
+        const marker = L.marker([entry.lat, entry.lng])
+            .bindPopup(`${entry.analyte}<br>${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
+        
+        markerGroup.addLayer(marker);
+    });
+    
+    markerGroup.addTo(map);
 
         // Function to create a heatmap
         function createHeatmap(entries) {
