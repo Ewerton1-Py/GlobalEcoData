@@ -9,10 +9,7 @@
     <h1>Submit Your Research</h1>
     <p>We welcome contributions from researchers. Please fill out the form below:</p>
     
-    <iframe src="<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform?embedded=true" width="640" height="1357" frameborder="0" marginheight="0" marginwidth="0">Carregando…</iframe>" width="640" height="480" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
-</body>
-</html>
-
+    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform?embedded=true" width="640" height="1357" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
 
     <h1>Environmental Analysis Map</h1>
 
@@ -33,7 +30,7 @@
         <option value="surficial">Surficial Particulate Matter</option>
     </select>
 
-    <div id="map"></div>
+    <div id="map" style="height: 500px;"></div> <!-- Added height for map -->
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
@@ -41,27 +38,4 @@
         var map = L.map('map').setView([20, 0], 2); // Centered globally
 
         // Add OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Example locations (latitude, longitude, title, and link)
-        var locations = [
-            { coords: [34.0522, -118.2437], title: 'Los Angeles', link: 'paper1.html' },
-            { coords: [51.5074, -0.1278], title: 'London', link: 'paper2.html' },
-            { coords: [35.6895, 139.6917], title: 'Tokyo', link: 'paper3.html' },
-        ];
-
-        // Function to add markers to the map
-        function addMarkers() {
-            locations.forEach(function(location) {
-                var marker = L.marker(location.coords).addTo(map);
-                marker.bindPopup(`<a href="${location.link}" target="_blank">${location.title}</a>`);
-            });
-        }
-
-        addMarkers();
-    </script>
-</body>
-</html>
+        L.tileLayer('https://
