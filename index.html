@@ -110,17 +110,19 @@
             <button id="downloadCSV" class="submit-button">Download CSV</button>
             <button id="downloadPDF" class="submit-button">Download PDF</button>
 
-            <h2>Submit Data via Google Form</h2>
-            <!-- Embedded Google Form -->
-            <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform?embedded=true" 
-                    width="100%" height="800" frameborder="0" marginheight="0" marginwidth="0">
-                Loading…
-            </iframe>
+            <!-- Google Form Link Button -->
+            <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform', '_blank')" class="google-form-button">
+                Submit Data via Google Form
+            </button>
 
             <h2>Environmental Analysis Map</h2>
         </div>
 
         <div id="map"></div>
+    </div>
+
+    <div id="chartContainer">
+        <canvas id="concentrationChart"></canvas>
     </div>
 
     <div id="chartContainer">
