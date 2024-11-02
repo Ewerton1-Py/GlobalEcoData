@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Contributions</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-heat/dist/leaflet-heat.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .container {
@@ -80,12 +83,36 @@
     <script>
         // Dummy data for demonstration
         const dataEntries = [
-            { year: 2020, analyte: 'PAHs', environment: 'Water', concentration: 5.2 },
-            { year: 2021, analyte: 'Alkanes', environment: 'Soil', concentration: 3.4 },
-            { year: 2020, analyte: 'Sterols', environment: 'Groundwater', concentration: 2.1 },
-            { year: 2022, analyte: 'Pesticides', environment: 'Water', concentration: 4.8 },
+            { year: 2020, analyte: 'PAHs', environment: 'Water', concentration: 5.2, lat: 34.05, lng: -118.25 },
+            { year: 2021, analyte: 'Alkanes', environment: 'Soil', concentration: 3.4, lat: 40.71, lng: -74.00 },
+            { year: 2020, analyte: 'Sterols', environment: 'Groundwater', concentration: 2.1, lat: 37.77, lng: -122.42 },
+            { year: 2022, analyte: 'Pesticides', environment: 'Water', concentration: 4.8, lat: 34.05, lng: -118.25 },
             // Add more entries as needed
         ];
+
+        // Initialize the map
+        const map = L.map('map').setView([37.8, -96], 4); // Center of the US
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Function to add markers to the map
+        function addMarkers(entries) {
+            entries.forEach(entry => {
+                const marker = L.marker([entry.lat, entry.lng]).addTo(map)
+                    .bindPopup(`${entry.analyte}<br>${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
+            });
+        }
+
+        // Function to create a heatmap
+        function createHeatmap(entries) {
+            const heatData = entries.map(entry => [entry.lat, entry.lng, entry.concentration]);
+            L.heatLayer(heatData, { radius: 25 }).addTo(map);
+        }
+
+        // Add all markers and heatmap on load
+        addMarkers(dataEntries);
+        createHeatmap(dataEntries);
 
         document.getElementById('loadEntries').addEventListener('click', function() {
             const selectedAnalyte = document.getElementById('analyte').value;
@@ -100,6 +127,19 @@
                 return matchesAnalyte && matchesEnvironment && matchesYear;
             });
 
+            // Clear previous markers and heatmap
+            map.eachLayer(function (layer) {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+                if (layer instanceof L.heatLayer) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Add new markers and heatmap based on filtered data
+            addMarkers(filteredData);
+            createHeatmap(filteredData);
             plotChart(filteredData);
         });
 
