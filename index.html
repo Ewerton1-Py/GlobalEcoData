@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Contributions</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
     <h1>Submit Your Research</h1>
@@ -30,7 +31,7 @@
         <option value="surficial">Surficial Particulate Matter</option>
     </select>
 
-    <div id="map" style="height: 500px;"></div> <!-- Added height for map -->
+    <div id="map" style="height: 500px;"></div> <!-- Make sure to set height -->
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
@@ -38,4 +39,27 @@
         var map = L.map('map').setView([20, 0], 2); // Centered globally
 
         // Add OpenStreetMap tile layer
-        L.tileLayer('https://
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Example locations (latitude, longitude, title, and link)
+        var locations = [
+            { coords: [34.0522, -118.2437], title: 'Los Angeles', link: 'paper1.html' },
+            { coords: [51.5074, -0.1278], title: 'London', link: 'paper2.html' },
+            { coords: [35.6895, 139.6917], title: 'Tokyo', link: 'paper3.html' },
+        ];
+
+        // Function to add markers to the map
+        function addMarkers() {
+            locations.forEach(function(location) {
+                var marker = L.marker(location.coords).addTo(map);
+                marker.bindPopup(`<a href="${location.link}" target="_blank">${location.title}</a>`);
+            });
+        }
+
+        addMarkers();
+    </script>
+</body>
+</html>
