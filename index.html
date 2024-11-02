@@ -51,7 +51,7 @@
 
         // Load approved entries from Google Sheets
         document.getElementById('loadEntries').addEventListener('click', function() {
-            fetch('YOUR_GOOGLE_SHEET_PUBLIC_URL') // Replace with your Google Sheets URL
+            fetch('https://docs.google.com/forms/d/1LHkI99mOyfsr3bxdnWDGAR_gzrxZNOU0f93LjCSRSdY/edit') // Replace with your Google Sheets URL
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(entry => {
