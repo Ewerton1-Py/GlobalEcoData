@@ -82,6 +82,26 @@
             <label for="year">Enter Year:</label>
             <input type="text" id="year" placeholder="e.g., 2020">
 
+            <label for="zone">Select Zone:</label>
+            <select id="zone">
+                <option value="">All</option>
+                <option value="Frigid Zone">Frigid Zone</option>
+                <option value="Temperate Zone">Temperate Zone</option>
+                <option value="Tropics">Tropics</option>
+            </select>
+
+            <label for="continent">Select Continent:</label>
+            <select id="continent">
+                <option value="">All</option>
+                <option value="Africa">Africa</option>
+                <option value="Asia">Asia</option>
+                <option value="Europe">Europe</option>
+                <option value="North America">North America</option>
+                <option value="Oceania">Oceania</option>
+                <option value="South America">South America</option>
+                <option value="Antarctica">Antarctica</option>
+            </select>
+
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
             <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform', '_blank')" class="google-form-button">
                 Submit Data via Google Form
