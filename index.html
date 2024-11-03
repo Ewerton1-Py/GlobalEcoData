@@ -136,11 +136,9 @@
             }
         }
 
-        // Data entries with automatic zone assignment
-        const dataEntries = [
-            { year: 2020, analyte: 'PAHs', environment: 'Suspended Particulate Matter', concentration: 0.355, lat: -10.742003, lng: -36.861046, continent: 'South America', zone: determineZone(-10.742003) },
-            { year: 2021, analyte: 'Alkanes', environment: 'Soil', concentration: 1.5, lat: 51.5074, lng: -0.1278, continent: 'Europe', zone: determineZone(51.5074) },
-            { year: 2019, analyte: 'Pesticides', environment: 'Water', concentration: 2.3, lat: 40.7128, lng: -74.0060, continent: 'North America', zone: determineZone(40.7128) }
+        // Example locations (latitude, longitude, title, and link)
+        var locations = [
+            { coords: [-10.742003, -36.861046], analyte: 'PAHs', environment: 'Suspended Particulate Matter', concentration: 0.355, link: 'paper1.html' },
         ];
 
         // Initialize the map
