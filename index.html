@@ -171,16 +171,21 @@
             });
         }
 
-        // Load entries and display histogram
+        // Load entries on button click
         document.getElementById('loadEntries').addEventListener('click', function() {
-            const selectedAnalyte = document.getElementById('analyte').value;
-            const selectedEnvironment = document.getElementById('environment').value;
-            const enteredYear = document.getElementById('year').value;
-
+            // Filter entries based on selections
             const filteredLocations = locations.filter(entry => {
+                const selectedAnalyte = document.getElementById('analyte').value;
+                const selectedEnvironment = document.getElementById('environment').value;
+                const selectedYear = document.getElementById('year').value;
+                const selectedZone = document.getElementById('zone').value;
+                const selectedContinent = document.getElementById('continent').value;
+
                 return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
                        (!selectedEnvironment || entry.environment === selectedEnvironment) &&
-                       (!enteredYear || entry.year.toString() === enteredYear);
+                       (!selectedYear || entry.year.toString() === selectedYear) &&
+                       (!selectedZone || entry.zone === selectedZone) &&
+                       (!selectedContinent || entry.continent === selectedContinent);
             });
 
             // Clear existing markers
@@ -190,7 +195,7 @@
                 }
             });
 
-            // Add filtered markers and display histogram
+            // Add filtered markers
             addMarkers(filteredLocations);
             plotHistogram(filteredLocations);
         });
