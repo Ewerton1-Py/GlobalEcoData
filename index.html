@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -193,6 +194,16 @@
             addMarkers(filteredLocations);
             plotHistogram(filteredLocations);
         });
+
+        // Show notification
+        function showNotification(message) {
+            const notificationDiv = document.getElementById('notification');
+            notificationDiv.textContent = message;
+            notificationDiv.style.display = 'block';
+            setTimeout(() => {
+                notificationDiv.style.display = 'none';
+            }, 3000);
+        }
     </script>
 </body>
 </html>
