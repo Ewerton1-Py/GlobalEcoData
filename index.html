@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Contributions</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-heat/dist/leaflet-heat.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -39,9 +37,10 @@
         .submit-button:hover, .google-form-button:hover {
             background-color: #45a049;
         }
-        #chartContainer {
+        #chartContainer, #histogramContainer {
             width: 100%;
             height: 400px;
+            margin-top: 20px;
         }
         #notification {
             background-color: #f9edbe;
@@ -82,29 +81,6 @@
             <label for="year">Enter Year:</label>
             <input type="text" id="year" placeholder="e.g., 2020">
 
-            <label for="zone">Select Zone:</label>
-            <select id="zone">
-                <option value="">All</option>
-                <option value="Arctic Circle">Arctic Circle</option>
-                <option value="Temperature Zone">Temperature Zone</option>
-                <option value="Subtropics">Subtropics</option>
-                <option value="Tropics">Tropics</option>
-                <option value="Antarctic Zone">Antarctic Zone</option>
-                <option value="Frigid Zone">Frigid Zone</option>
-            </select>
-
-            <label for="continent">Select Continent:</label>
-            <select id="continent">
-                <option value="">All</option>
-                <option value="Africa">Africa</option>
-                <option value="Asia">Asia</option>
-                <option value="Europe">Europe</option>
-                <option value="North America">North America</option>
-                <option value="Oceania">Oceania</option>
-                <option value="South America">South America</option>
-                <option value="Antarctica">Antarctica</option>
-            </select>
-
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
             <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform', '_blank')" class="google-form-button">
                 Submit Data via Google Form
@@ -114,8 +90,8 @@
         <div id="map"></div>
     </div>
 
-    <div id="chartContainer">
-        <canvas id="concentrationChart"></canvas>
+    <div id="histogramContainer">
+        <canvas id="concentrationHistogram"></canvas>
     </div>
 
     <script>
@@ -132,8 +108,8 @@
 
         // Example locations with automatic zone assignment
         const locations = [
-            { coords: [-10.742003, -36.861046], title: 'Research on PAHs', analyte: 'PAHs', environment: 'Suspended Particulate Matter', concentration: 0.355, year: 2020, continent: 'South America', link: 'https://www.sciencedirect.com/science/article/pii/S235248552200278X', zone: determineZone(-10.742003) },
-            { coords: [-10.741937, -36.855117], title: 'Research on PAHs', analyte: 'PAHs', environment: 'Water', concentration: 0.013, year: 2018, continent: 'South America', link: 'https://www.sciencedirect.com/science/article/pii/S0025326X1731041X', zone: determineZone(51.5074) },
+            { coords: [-10.742003, -36.861046], title: 'Research on PAHs', analyte: 'PAHs', environment: 'Water', concentration: 0.355, year: 2020, continent: 'South America', link: 'paper1.html', zone: determineZone(-10.742003) },
+            { coords: [51.5074, -0.1278], title: 'Research on Alkanes', analyte: 'Alkanes', environment: 'Soil', concentration: 1.2, year: 2021, continent: 'Europe', link: 'paper2.html', zone: determineZone(51.5074) },
             { coords: [35.6895, 139.6917], title: 'Research on Sterols', analyte: 'Sterols', environment: 'Groundwater', concentration: 0.9, year: 2019, continent: 'Asia', link: 'paper3.html', zone: determineZone(35.6895) }
         ];
 
@@ -143,7 +119,7 @@
             maxZoom: 19,
         }).addTo(map);
 
-        // Add markers to the map
+        // Function to add markers to the map
         function addMarkers(entries) {
             const markerGroup = L.featureGroup();
             entries.forEach(entry => {
@@ -158,21 +134,52 @@
             }
         }
 
-        // Load entries on button click
-        document.getElementById('loadEntries').addEventListener('click', function() {
-            // Filter entries based on selections
-            const filteredLocations = locations.filter(entry => {
-                const selectedAnalyte = document.getElementById('analyte').value;
-                const selectedEnvironment = document.getElementById('environment').value;
-                const selectedYear = document.getElementById('year').value;
-                const selectedZone = document.getElementById('zone').value;
-                const selectedContinent = document.getElementById('continent').value;
+        // Histogram setup
+        let histogramChart;
+        function plotHistogram(filteredData) {
+            const years = filteredData.map(entry => entry.year);
+            const concentrations = filteredData.map(entry => entry.concentration);
 
+            if (histogramChart) histogramChart.destroy();
+
+            const ctx = document.getElementById('concentrationHistogram').getContext('2d');
+            histogramChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Concentration (µg/g)',
+                        data: concentrations,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'Year' } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Concentration (µg/g)' } }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Yearly Concentration of ${filteredData[0]?.analyte || 'Selected Analyte'} in ${filteredData[0]?.environment || 'Selected Environment'}`
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load entries and display histogram
+        document.getElementById('loadEntries').addEventListener('click', function() {
+            const selectedAnalyte = document.getElementById('analyte').value;
+            const selectedEnvironment = document.getElementById('environment').value;
+            const enteredYear = document.getElementById('year').value;
+
+            const filteredLocations = locations.filter(entry => {
                 return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
                        (!selectedEnvironment || entry.environment === selectedEnvironment) &&
-                       (!selectedYear || entry.year.toString() === selectedYear) &&
-                       (!selectedZone || entry.zone === selectedZone) &&
-                       (!selectedContinent || entry.continent === selectedContinent);
+                       (!enteredYear || entry.year.toString() === enteredYear);
             });
 
             // Clear existing markers
@@ -182,8 +189,9 @@
                 }
             });
 
-            // Add filtered markers
+            // Add filtered markers and display histogram
             addMarkers(filteredLocations);
+            plotHistogram(filteredLocations);
         });
     </script>
 </body>
