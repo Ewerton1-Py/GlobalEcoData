@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -107,14 +106,9 @@
             </select>
 
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
-            <button id="downloadCSV" class="submit-button">Download CSV</button>
-            <button id="downloadPDF" class="submit-button">Download PDF</button>
-
             <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSdiFE37CTDu1TJE_QfzY_tVGj0UO57Fn3wIBl2oEIV4Z0OlIg/viewform', '_blank')" class="google-form-button">
                 Submit Data via Google Form
             </button>
-
-            <h2>Environmental Analysis Map</h2>
         </div>
 
         <div id="map"></div>
@@ -136,134 +130,60 @@
             }
         }
 
-        // Example locations (latitude, longitude, title, and link)
-        var locations = [
-            { coords: [-10.742003, -36.861046], analyte: 'PAHs', environment: 'Suspended Particulate Matter', concentration: 0.355, link: 'paper1.html' },
+        // Example locations with automatic zone assignment
+        const locations = [
+            { coords: [-10.742003, -36.861046], title: 'Research on PAHs', analyte: 'PAHs', environment: 'Suspended Particulate Matter', concentration: 0.355, year: 2020, continent: 'South America', link: 'paper1.html', zone: determineZone(-10.742003) },
+            { coords: [51.5074, -0.1278], title: 'Research on Alkanes', analyte: 'Alkanes', environment: 'Soil', concentration: 1.2, year: 2021, continent: 'Europe', link: 'paper2.html', zone: determineZone(51.5074) },
+            { coords: [35.6895, 139.6917], title: 'Research on Sterols', analyte: 'Sterols', environment: 'Groundwater', concentration: 0.9, year: 2019, continent: 'Asia', link: 'paper3.html', zone: determineZone(35.6895) }
         ];
 
         // Initialize the map
-        const map = L.map('map').setView([37.8, -96], 4); // Center of the US
+        const map = L.map('map').setView([20, 0], 2); // Global view
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);
 
-        // Function to add markers to the map and adjust view to show all markers
+        // Add markers to the map
         function addMarkers(entries) {
             const markerGroup = L.featureGroup();
-            
             entries.forEach(entry => {
-                const marker = L.marker([entry.lat, entry.lng])
-                    .bindPopup(`${entry.analyte}<br>${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
+                const marker = L.marker(entry.coords)
+                    .bindPopup(`<b>${entry.title}</b><br><a href="${entry.link}" target="_blank">View Paper</a><br>Anaylte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
                 
                 markerGroup.addLayer(marker);
             });
-            
             markerGroup.addTo(map);
-            
-            // Adjust the map view to fit all markers
             if (entries.length > 0) {
                 map.fitBounds(markerGroup.getBounds());
             }
         }
 
-        // Function to create a heatmap
-        function createHeatmap(entries) {
-            const heatData = entries.map(entry => [entry.lat, entry.lng, entry.concentration]);
-            L.heatLayer(heatData, { radius: 25 }).addTo(map);
-        }
-
-        // Show notification
-        function showNotification(message) {
-            const notificationDiv = document.getElementById('notification');
-            notificationDiv.textContent = message;
-            notificationDiv.style.display = 'block';
-            setTimeout(() => {
-                notificationDiv.style.display = 'none';
-            }, 3000);
-        }
-
-        function plotChart(filteredData) {
-            // Clear previous chart if it exists
-            const chartContainer = document.getElementById('chartContainer');
-            chartContainer.innerHTML = '<canvas id="concentrationChart"></canvas>';
-            
-            const years = filteredData.map(entry => entry.year);
-            const concentrations = filteredData.map(entry => entry.concentration);
-
-            const ctx = document.getElementById('concentrationChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        label: 'Concentration Trend',
-                        data: concentrations,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 2,
-                        fill: false
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Concentration (µg/g)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Year'
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `Concentration Trend for ${filteredData[0]?.analyte || 'All Compounds'} in ${filteredData[0]?.environment || 'All Environments'}`
-                        }
-                    }
-                }
-            });
-        }
-
+        // Load entries on button click
         document.getElementById('loadEntries').addEventListener('click', function() {
-            const selectedAnalyte = document.getElementById('analyte').value;
-            const selectedEnvironment = document.getElementById('environment').value;
-            const enteredYear = document.getElementById('year').value;
-            const selectedZone = document.getElementById('zone').value;
-            const selectedContinent = document.getElementById('continent').value;
+            // Filter entries based on selections
+            const filteredLocations = locations.filter(entry => {
+                const selectedAnalyte = document.getElementById('analyte').value;
+                const selectedEnvironment = document.getElementById('environment').value;
+                const selectedYear = document.getElementById('year').value;
+                const selectedZone = document.getElementById('zone').value;
+                const selectedContinent = document.getElementById('continent').value;
 
-            const filteredData = dataEntries.filter(entry => {
-                const matchesAnalyte = !selectedAnalyte || entry.analyte === selectedAnalyte;
-                const matchesEnvironment = !selectedEnvironment || entry.environment === selectedEnvironment;
-                const matchesYear = !enteredYear || entry.year.toString() === enteredYear;
-                const matchesZone = !selectedZone || entry.zone === selectedZone;
-                const matchesContinent = !selectedContinent || entry.continent === selectedContinent;
-
-                return matchesAnalyte && matchesEnvironment && matchesYear && matchesZone && matchesContinent;
+                return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
+                       (!selectedEnvironment || entry.environment === selectedEnvironment) &&
+                       (!selectedYear || entry.year.toString() === selectedYear) &&
+                       (!selectedZone || entry.zone === selectedZone) &&
+                       (!selectedContinent || entry.continent === selectedContinent);
             });
 
-            // Clear previous markers and heatmap
-            map.eachLayer(function (layer) {
-                if (layer instanceof L.Marker) {
-                    map.removeLayer(layer);
-                }
-                if (layer instanceof L.heatLayer) {
+            // Clear existing markers
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker || layer instanceof L.FeatureGroup) {
                     map.removeLayer(layer);
                 }
             });
 
-            // Add new markers and heatmap based on filtered data
-            addMarkers(filteredData);
-            createHeatmap(filteredData);
-
-            // Plot the chart for the specific analyte/environment combination
-            plotChart(filteredData);
-
-            showNotification(`Loaded ${filteredData.length} entries.`);
+            // Add filtered markers
+            addMarkers(filteredLocations);
         });
     </script>
 </body>
