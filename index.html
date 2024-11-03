@@ -17,13 +17,19 @@
             cursor: pointer; text-align: center; margin-top: 10px;
         }
         #chartContainer, #histogramContainer { width: 100%; height: 400px; margin-top: 20px; }
+        #notification {
+            background-color: #f9edbe; color: #856404; border: 1px solid #ffeeba;
+            padding: 10px; margin: 10px 0; display: none; border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <h1>Submit Your Research</h1>
+    <div id="notification"></div>
     <div class="container">
         <div class="form-container">
             <p>We welcome contributions from researchers. Please select your analyte and environment, then click the button below to submit your research paper:</p>
+            <!-- Filters for analyte, environment, year, zone, and continent -->
             <label for="analyte">Select Analyte:</label>
             <select id="analyte">
                 <option value="">All</option>
@@ -47,7 +53,7 @@
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
 
             <!-- Button to open Google Form for new submissions -->
-            <button onclick="window.open('https://docs.google.com/forms/d/Research Contribution Submission/viewform', '_blank')" class="google-form-button">
+            <button onclick="window.open('https://docs.google.com/forms/d/YOUR_FORM_ID/viewform', '_blank')" class="google-form-button">
                 Submit New Research Data
             </button>
         </div>
@@ -59,8 +65,8 @@
     </div>
 
     <script>
-        // Replace with the correct Google Sheet ID and make sure it’s public
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/Research Contribution Submission/gviz/tq?tqx=out:json';
+        // Replace with the correct Google Sheet ID
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1g046AIMh5Ki80GX546AC4hblz9sBzddB5lFjXQ7PqdU/gviz/tq?tqx=out:json';
 
         const map = L.map('map').setView([20, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
