@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script> <!-- Leaflet.heat plugin -->
+
     <style>
         body { font-family: Arial, sans-serif; }
         .container { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -25,7 +27,7 @@
     <div class="container">
         <div class="form-container">
             <p>Select filters, then click to load data:</p>
-
+            <!-- Filter form (unchanged) -->
             <label for="analyte">Select Analyte:</label>
             <select id="analyte">
                 <option value="">All</option>
@@ -34,7 +36,6 @@
                 <option value="Sterols">Sterols</option>
                 <option value="Pesticides">Pesticides</option>
             </select>
-
             <label for="environment">Select Environment:</label>
             <select id="environment">
                 <option value="">All</option>
@@ -44,10 +45,8 @@
                 <option value="Sediment">Sediment</option>
                 <option value="Soil">Soil</option>
             </select>
-
             <label for="year">Enter Year:</label>
             <input type="text" id="year" placeholder="e.g., 2020">
-
             <label for="zone">Select Zone:</label>
             <select id="zone">
                 <option value="">All</option>
@@ -55,7 +54,6 @@
                 <option value="Temperate Zone">Temperate Zone</option>
                 <option value="Tropics">Tropics</option>
             </select>
-
             <label for="continent">Select Continent:</label>
             <select id="continent">
                 <option value="">All</option>
@@ -89,6 +87,7 @@
 
         let markerGroup = L.featureGroup().addTo(map); // Define markerGroup globally
         let histogramChart;
+        let heatmapLayer; // For the heatmap layer
 
         async function loadData() {
             try {
@@ -137,11 +136,11 @@
             clearMarkers(); // Clear existing markers before adding new ones
             addMarkers(filteredData);
             plotHistogram(filteredData);
+            updateHeatmap(filteredData); // Update heatmap with filtered data
         }
 
         function clearMarkers() {
-            // Clear all markers from the map
-            markerGroup.clearLayers();
+            markerGroup.clearLayers(); // Clear all markers from the map
         }
 
         function addMarkers(entries) {
@@ -151,6 +150,28 @@
                 markerGroup.addLayer(marker);
             });
             if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
+        }
+
+        function updateHeatmap(data) {
+            // Clear existing heatmap layer if it exists
+            if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+            }
+
+            // Prepare data for the heatmap (latitude, longitude, intensity based on concentration)
+            const heatmapData = data.map(entry => [
+                entry.coords[0],
+                entry.coords[1],
+                entry.concentration // Intensity based on concentration
+            ]);
+
+            // Add new heatmap layer
+            heatmapLayer = L.heatLayer(heatmapData, {
+                radius: 25,
+                blur: 15,
+                maxZoom: 10,
+                max: Math.max(...heatmapData.map(d => d[2])) // Adjust intensity based on max concentration
+            }).addTo(map);
         }
 
         function plotHistogram(data) {
