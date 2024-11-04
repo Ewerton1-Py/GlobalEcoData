@@ -150,8 +150,14 @@
         }
 
         function plotHistogram(data) {
-            const years = data.map(entry => entry.year);
-            const concentrations = data.map(entry => entry.concentration);
+            // Aggregate concentrations by year
+            const concentrationByYear = data.reduce((acc, entry) => {
+                acc[entry.year] = (acc[entry.year] || 0) + entry.concentration;
+                return acc;
+            }, {});
+
+            const years = Object.keys(concentrationByYear);
+            const totalConcentrations = Object.values(concentrationByYear);
 
             if (histogramChart) histogramChart.destroy();
 
@@ -161,8 +167,8 @@
                 data: {
                     labels: years,
                     datasets: [{
-                        label: 'Concentration (µg/g or µg/L)',
-                        data: concentrations,
+                        label: 'Total Concentration (µg/g or µg/L)',
+                        data: totalConcentrations,
                         backgroundColor: 'rgba(75, 192, 192, 0.5)',
                         borderColor: 'rgba(75, 192, 192, 1)',
                         borderWidth: 1
@@ -171,12 +177,12 @@
                 options: {
                     scales: {
                         x: { title: { display: true, text: 'Year' } },
-                        y: { beginAtZero: true, title: { display: true, text: 'Concentration (µg/g or µg/L)' } }
+                        y: { beginAtZero: true, title: { display: true, text: 'Total Concentration (µg/g or µg/L)' } }
                     },
                     plugins: {
                         title: {
                             display: true,
-                            text: `Yearly Concentration of ${data[0]?.analyte || 'Selected Analyte'} in ${data[0]?.environment || 'Selected Environment'}`
+                            text: `Total Yearly Concentration of ${data[0]?.analyte || 'Selected Analyte'} in ${data[0]?.environment || 'Selected Environment'}`
                         }
                     }
                 }
