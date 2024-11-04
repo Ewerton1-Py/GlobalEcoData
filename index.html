@@ -95,13 +95,13 @@
                 
                 const newData = data.map(row => ({
                     coords: [parseFloat(row.Latitude), parseFloat(row.Longitude)],
-                    title: row['Paper Title'],
+                    title: row.PaperTitle,
                     analyte: row.Analyte,
                     environment: row.Environment,
                     concentration: parseFloat(row.Concentration),
-                    year: parseInt(row['Year of Publication']),
+                    year: parseInt(row.Year),
                     continent: row.Continent,
-                    link: row['Link of Your Research'],
+                    link: row.Link,
                     zone: determineZone(parseFloat(row.Latitude))
                 }));
 
