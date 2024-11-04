@@ -23,7 +23,7 @@
     <h1>Submit Your Research</h1>
     <div class="container">
         <div class="form-container">
-            <p>We welcome contributions from researchers. Please select your analyte, environment, and other filters, then click the button below to load data:</p>
+            <p>Select filters, then click to load data:</p>
 
             <label for="analyte">Select Analyte:</label>
             <select id="analyte">
@@ -33,6 +33,7 @@
                 <option value="Sterols">Sterols</option>
                 <option value="Pesticides">Pesticides</option>
             </select>
+
             <label for="environment">Select Environment:</label>
             <select id="environment">
                 <option value="">All</option>
@@ -42,8 +43,10 @@
                 <option value="Sediment">Sediment</option>
                 <option value="Soil">Soil</option>
             </select>
+
             <label for="year">Enter Year:</label>
             <input type="text" id="year" placeholder="e.g., 2020">
+
             <label for="zone">Select Zone:</label>
             <select id="zone">
                 <option value="">All</option>
@@ -51,6 +54,7 @@
                 <option value="Temperate Zone">Temperate Zone</option>
                 <option value="Tropics">Tropics</option>
             </select>
+
             <label for="continent">Select Continent:</label>
             <select id="continent">
                 <option value="">All</option>
@@ -62,6 +66,7 @@
                 <option value="South America">South America</option>
                 <option value="Antarctica">Antarctica</option>
             </select>
+
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
             <button onclick="window.open('https://docs.google.com/forms/d/YOUR_FORM_ID/viewform', '_blank')" class="google-form-button">
                 Submit New Research Data
@@ -76,30 +81,28 @@
     </div>
 
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1g046AIMh5Ki80GX546AC4hblz9sBzddB5lFjXQ7PqdU/gviz/tq?tqx=out:json';
+        const SHEET_API_URL = 'YOUR_SCRIPT_URL'; // Replace with your Google Apps Script URL
+
         const map = L.map('map').setView([20, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-        let locations = [];
         let histogramChart;
 
         async function loadData() {
             try {
-                const response = await fetch(SHEET_URL);
-                const text = await response.text();
-                const jsonData = JSON.parse(text.substr(47).slice(0, -2));
-                const rows = jsonData.table.rows;
-
-                const newData = rows.map(row => ({
-                    coords: [parseFloat(row.c[0].v), parseFloat(row.c[1].v)],
-                    title: row.c[2].v,
-                    analyte: row.c[3].v,
-                    environment: row.c[4].v,
-                    concentration: parseFloat(row.c[5].v),
-                    year: parseInt(row.c[6].v),
-                    continent: row.c[7].v,
-                    link: row.c[8].v,
-                    zone: determineZone(parseFloat(row.c[0].v))
+                const response = await fetch(SHEET_API_URL);
+                const data = await response.json();
+                
+                const newData = data.map(row => ({
+                    coords: [parseFloat(row.Latitude), parseFloat(row.Longitude)],
+                    title: row['Paper Title'],
+                    analyte: row.Analyte,
+                    environment: row.Environment,
+                    concentration: parseFloat(row.Concentration),
+                    year: parseInt(row['Year of Publication']),
+                    continent: row.Continent,
+                    link: row['Link of Your Research'],
+                    zone: determineZone(parseFloat(row.Latitude))
                 }));
 
                 filterAndDisplayData(newData);
@@ -109,13 +112,9 @@
         }
 
         function determineZone(lat) {
-            if (lat >= 66.5 || lat <= -66.5) {
-                return 'Frigid Zone';
-            } else if ((lat >= 23.5 && lat < 66.5) || (lat <= -23.5 && lat > -66.5)) {
-                return 'Temperate Zone';
-            } else {
-                return 'Tropics';
-            }
+            if (lat >= 66.5 || lat <= -66.5) return 'Frigid Zone';
+            else if ((lat >= 23.5 && lat < 66.5) || (lat <= -23.5 && lat > -66.5)) return 'Temperate Zone';
+            else return 'Tropics';
         }
 
         function filterAndDisplayData(data) {
@@ -145,13 +144,10 @@
                     .addTo(markerGroup);
             });
             markerGroup.addTo(map);
-            if (entries.length > 0) {
-                map.fitBounds(markerGroup.getBounds());
-            }
+            if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
         }
 
         function plotHistogram(data) {
-            // Aggregate concentrations by year
             const concentrationByYear = data.reduce((acc, entry) => {
                 acc[entry.year] = (acc[entry.year] || 0) + entry.concentration;
                 return acc;
