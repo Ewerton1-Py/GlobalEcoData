@@ -86,6 +86,7 @@
         const map = L.map('map').setView([20, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
+        let markerGroup = L.featureGroup().addTo(map); // Define markerGroup globally
         let histogramChart;
 
         async function loadData() {
@@ -132,18 +133,22 @@
                        (!selectedContinent || entry.continent === selectedContinent);
             });
 
+            clearMarkers(); // Clear existing markers before adding new ones
             addMarkers(filteredData);
             plotHistogram(filteredData);
         }
 
+        function clearMarkers() {
+            // Clear all markers from the map
+            markerGroup.clearLayers();
+        }
+
         function addMarkers(entries) {
-            const markerGroup = L.featureGroup();
             entries.forEach(entry => {
-                L.marker(entry.coords)
-                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}<br><a href="${entry.link}" target="_blank">View Paper</a>`)
-                    .addTo(markerGroup);
+                const marker = L.marker(entry.coords)
+                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}<br><a href="${entry.link}" target="_blank">View Paper</a>`);
+                markerGroup.addLayer(marker);
             });
-            markerGroup.addTo(map);
             if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
         }
 
