@@ -81,7 +81,7 @@
             <button onclick="window.open('https://docs.google.com/spreadsheets/d/1g046AIMh5Ki80GX546AC4hblz9sBzddB5lFjXQ7PqdU/edit?gid=0#gid=0', '_blank')" class="google-form-button">
                 Submit New Research Data
             </button>
-            </div>
+        </div>
         <div id="map"></div>
     </div>
 
@@ -93,13 +93,14 @@
     </div>
 
     <script>
-        const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbwnDgbwL_y0xV1SRVZsxim24_csJYS_0Dlq6bxcGkCgemWuFXkgl5UZmkgd1Xu9YrN4lw/exec'; // Replace with your Google Apps Script URL
+        const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbwnDgbwL_y0xV1SRVZsxim24_csJYS_0Dlq6bxcGkCgemWuFXkgl5UZmkgd1Xu9YrN4lw/exec';
 
         const map = L.map('map').setView([20, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
         let markerGroup = L.featureGroup().addTo(map);
         let histogramChart, boxplotChart, heatmapLayer;
+        let filteredData; // Define filteredData globally
 
         document.getElementById('heatmapToggle').addEventListener('change', toggleHeatmap);
         document.getElementById('loadEntries').addEventListener('click', loadData);
@@ -139,7 +140,7 @@
             const selectedZone = document.getElementById('zone').value;
             const selectedContinent = document.getElementById('continent').value;
 
-            const filteredData = data.filter(entry => {
+            filteredData = data.filter(entry => {
                 return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
                        (!selectedEnvironment || entry.environment === selectedEnvironment) &&
                        (!isNaN(yearStart) ? entry.year >= yearStart : true) &&
@@ -175,8 +176,11 @@
         }
 
         function toggleHeatmap() {
-            if (document.getElementById('heatmapToggle').checked) updateHeatmap(filteredData);
-            else if (heatmapLayer) map.removeLayer(heatmapLayer);
+            if (filteredData && document.getElementById('heatmapToggle').checked) {
+                updateHeatmap(filteredData);
+            } else if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+            }
         }
 
         function plotHistogram(data) {
