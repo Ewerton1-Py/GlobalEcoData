@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script> <!-- Leaflet.heat plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxplot@2.1.0"></script> <!-- For boxplot support -->
 
     <style>
         body { font-family: Arial, sans-serif; }
@@ -18,16 +19,15 @@
             background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px;
             cursor: pointer; text-align: center; margin-top: 10px;
         }
-        #chartContainer, #histogramContainer { width: 100%; height: 400px; margin-top: 20px; }
+        #chartContainer, #histogramContainer, #boxplotContainer { width: 100%; height: 400px; margin-top: 20px; }
     </style>
 </head>
 <body>
     <h1>Submit Your Research</h1>
-    <p>Welcome to our research data repository, a collaborative platform aimed at advancing knowledge on environmental contaminants. Your contributions and suggestions help us improve the quality and reach of this resource, supporting informed decision-making and future research. Please feel free to share your thoughts and suggestions with us.</p>
+    <p>Welcome to our research data repository. This platform aims to advance knowledge on environmental contaminants through collective contributions. Suggestions for further improvement are highly appreciated.</p>
     <div class="container">
         <div class="form-container">
             <p>Select filters, then click to load data:</p>
-            <!-- Filter form (unchanged) -->
             <label for="analyte">Select Analyte:</label>
             <select id="analyte">
                 <option value="">All</option>
@@ -35,18 +35,28 @@
                 <option value="Alkanes">Alkanes</option>
                 <option value="Sterols">Sterols</option>
                 <option value="Pesticides">Pesticides</option>
+                <option value="VOCs">VOCs</option>
+                <option value="PCBs">PCBs</option>
+                <option value="Microplastics and Synthetic Polymers">Microplastics and Synthetic Polymers</option>
+                <option value="Heavy Metals">Heavy Metals</option>
             </select>
             <label for="environment">Select Environment:</label>
             <select id="environment">
                 <option value="">All</option>
-                <option value="Water">Water</option>
+                <option value="Air and Atmospheric Deposition">Air and Atmospheric Deposition</option>
+                <option value="Surface Water">Surface Water</option>
+                <option value="Wastewater and Effluents">Wastewater and Effluents</option>
+                <option value="Biota">Biota</option>
                 <option value="Groundwater">Groundwater</option>
                 <option value="Suspended Particulate Matter">Suspended Particulate Matter</option>
                 <option value="Sediment">Sediment</option>
                 <option value="Soil">Soil</option>
+                <option value="Ice and Snow">Ice and Snow</option>
             </select>
-            <label for="year">Enter Year:</label>
-            <input type="text" id="year" placeholder="e.g., 2020">
+            <label for="yearStart">Start Year:</label>
+            <input type="text" id="yearStart" placeholder="e.g., 2000">
+            <label for="yearEnd">End Year:</label>
+            <input type="text" id="yearEnd" placeholder="e.g., 2022">
             <label for="zone">Select Zone:</label>
             <select id="zone">
                 <option value="">All</option>
@@ -65,40 +75,36 @@
                 <option value="South America">South America</option>
                 <option value="Antarctica">Antarctica</option>
             </select>
-            
             <label for="heatmapToggle">Show Heatmap</label>
-            <input type="checkbox" id="heatmapToggle"> <!-- Heatmap toggle checkbox -->
-
+            <input type="checkbox" id="heatmapToggle">
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
-            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1g046AIMh5Ki80GX546AC4hblz9sBzddB5lFjXQ7PqdU/edit?gid=0#gid=0', '_blank')" class="google-form-button">
-                Submit New Research Data
-            </button>
         </div>
-
         <div id="map"></div>
     </div>
 
     <div id="histogramContainer">
         <canvas id="concentrationHistogram"></canvas>
     </div>
+    <div id="boxplotContainer">
+        <canvas id="concentrationBoxplot"></canvas>
+    </div>
 
     <script>
-        const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyDsZQBLCyI-cnoufwcYTQO6jtddjxyt4zKhOy7AmeBIgkMIsH-7JMtupjbsGXEWt2LBw/exec'; // Replace with your Google Apps Script URL
+        const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbwnDgbwL_y0xV1SRVZsxim24_csJYS_0Dlq6bxcGkCgemWuFXkgl5UZmkgd1Xu9YrN4lw/exec'; // Replace with your Google Apps Script URL
 
         const map = L.map('map').setView([20, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-        let markerGroup = L.featureGroup().addTo(map); // Define markerGroup globally
-        let histogramChart;
-        let heatmapLayer; // For the heatmap layer
+        let markerGroup = L.featureGroup().addTo(map);
+        let histogramChart, boxplotChart, heatmapLayer;
 
-        document.getElementById('heatmapToggle').addEventListener('change', toggleHeatmap); // Toggle event for heatmap
+        document.getElementById('heatmapToggle').addEventListener('change', toggleHeatmap);
+        document.getElementById('loadEntries').addEventListener('click', loadData);
 
         async function loadData() {
             try {
                 const response = await fetch(SHEET_API_URL);
                 const data = await response.json();
-                
                 const newData = data.map(row => ({
                     coords: [parseFloat(row.Latitude), parseFloat(row.Longitude)],
                     title: row.PaperTitle,
@@ -110,7 +116,6 @@
                     link: row.Link,
                     zone: determineZone(parseFloat(row.Latitude))
                 }));
-
                 filterAndDisplayData(newData);
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -126,61 +131,49 @@
         function filterAndDisplayData(data) {
             const selectedAnalyte = document.getElementById('analyte').value;
             const selectedEnvironment = document.getElementById('environment').value;
-            const selectedYear = document.getElementById('year').value;
+            const yearStart = parseInt(document.getElementById('yearStart').value);
+            const yearEnd = parseInt(document.getElementById('yearEnd').value);
             const selectedZone = document.getElementById('zone').value;
             const selectedContinent = document.getElementById('continent').value;
 
             const filteredData = data.filter(entry => {
                 return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
                        (!selectedEnvironment || entry.environment === selectedEnvironment) &&
-                       (!selectedYear || entry.year.toString() === selectedYear) &&
+                       (!isNaN(yearStart) ? entry.year >= yearStart : true) &&
+                       (!isNaN(yearEnd) ? entry.year <= yearEnd : true) &&
                        (!selectedZone || entry.zone === selectedZone) &&
                        (!selectedContinent || entry.continent === selectedContinent);
             });
 
-            clearMarkers(); // Clear existing markers before adding new ones
+            clearMarkers();
             addMarkers(filteredData);
             plotHistogram(filteredData);
-            if (document.getElementById('heatmapToggle').checked) {
-                updateHeatmap(filteredData); // Update heatmap if toggle is checked
-            }
+            plotBoxplot(filteredData);
+            if (document.getElementById('heatmapToggle').checked) updateHeatmap(filteredData);
         }
 
         function clearMarkers() {
-            markerGroup.clearLayers(); // Clear all markers from the map
+            markerGroup.clearLayers();
         }
 
         function addMarkers(entries) {
             entries.forEach(entry => {
                 const marker = L.marker(entry.coords)
-                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g or µg/L<br>Year: ${entry.year}<br><a href="${entry.link}" target="_blank">View Paper</a>`);
+                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
                 markerGroup.addLayer(marker);
             });
             if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
         }
 
         function updateHeatmap(data) {
-            // Prepare data for the heatmap (latitude, longitude, intensity based on concentration)
-            const heatmapData = data.map(entry => [
-                entry.coords[0],
-                entry.coords[1],
-                entry.concentration // Intensity based on concentration
-            ]);
-
-            // Clear existing heatmap layer if it exists
+            const heatmapData = data.map(entry => [entry.coords[0], entry.coords[1], entry.concentration]);
             if (heatmapLayer) map.removeLayer(heatmapLayer);
-
-            // Add new heatmap layer
             heatmapLayer = L.heatLayer(heatmapData, { radius: 25, blur: 15, maxZoom: 5 }).addTo(map);
         }
 
         function toggleHeatmap() {
-            // Check if heatmap should be displayed
-            if (document.getElementById('heatmapToggle').checked) {
-                updateHeatmap(filteredData); // Add heatmap if toggle is checked
-            } else if (heatmapLayer) {
-                map.removeLayer(heatmapLayer); // Remove heatmap if toggle is unchecked
-            }
+            if (document.getElementById('heatmapToggle').checked) updateHeatmap(filteredData);
+            else if (heatmapLayer) map.removeLayer(heatmapLayer);
         }
 
         function plotHistogram(data) {
@@ -188,12 +181,10 @@
                 acc[entry.year] = (acc[entry.year] || 0) + entry.concentration;
                 return acc;
             }, {});
-
             const years = Object.keys(concentrationByYear);
             const totalConcentrations = Object.values(concentrationByYear);
 
             if (histogramChart) histogramChart.destroy();
-
             const ctx = document.getElementById('concentrationHistogram').getContext('2d');
             histogramChart = new Chart(ctx, {
                 type: 'bar',
@@ -208,21 +199,41 @@
                     }]
                 },
                 options: {
-                    scales: {
-                        x: { title: { display: true, text: 'Year' } },
-                        y: { beginAtZero: true, title: { display: true, text: 'Total Concentration (µg/g or µg/L)' } }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `Total Yearly Concentration of ${data[0]?.analyte || 'Selected Analyte'} in ${data[0]?.environment || 'Selected Environment'}`
-                        }
-                    }
+                    scales: { x: { title: { display: true, text: 'Year' } }, y: { beginAtZero: true, title: { display: true, text: 'Total Concentration (µg/g or µg/L)' } } },
+                    plugins: { title: { display: true, text: `Total Yearly Concentration of ${data[0]?.analyte || 'Selected Analyte'}` } }
                 }
             });
         }
 
-        document.getElementById('loadEntries').addEventListener('click', loadData);
+        function plotBoxplot(data) {
+            const environmentGroups = data.reduce((acc, entry) => {
+                acc[entry.environment] = acc[entry.environment] || [];
+                acc[entry.environment].push(entry.concentration);
+                return acc;
+            }, {});
+            const environments = Object.keys(environmentGroups);
+            const boxplotData = environments.map(env => environmentGroups[env]);
+
+            if (boxplotChart) boxplotChart.destroy();
+            const ctx = document.getElementById('concentrationBoxplot').getContext('2d');
+            boxplotChart = new Chart(ctx, {
+                type: 'boxplot',
+                data: {
+                    labels: environments,
+                    datasets: [{
+                        label: 'Concentration by Environment',
+                        data: boxplotData,
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Concentration (µg/g or µg/L)' } } },
+                    plugins: { title: { display: true, text: 'Concentration Distribution by Environment' } }
+                }
+            });
+        }
     </script>
 </body>
 </html>
