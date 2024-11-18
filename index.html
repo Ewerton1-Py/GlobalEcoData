@@ -119,10 +119,10 @@
                     title: row.PaperTitle,
                     analyte: row.Analyte,
                     environment: row.Environment,
-                    Concentration: parseFloat(row.Concentration),
-                    Year: parseInt(row.Year),
-                    Continent: row.Continent,
-                    Link: row.Link,
+                    concentration: parseFloat(row.Concentration),
+                    year: parseInt(row.Year),
+                    continent: row.Continent,
+                    link: row.Link,
                     Continent: determineZone(parseFloat(row.Latitude))
                 }));
                 filterAndDisplayData(newData);
