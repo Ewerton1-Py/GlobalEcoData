@@ -14,7 +14,7 @@
         body { font-family: Arial, sans-serif; }
         .container { display: flex; justify-content: space-between; align-items: flex-start; }
         .form-container { width: 50%; padding-right: 20px; }
-        #map { height: 500px; width: 50%; }
+        #map { height: 500px; width: 55%; margin-top: 20px; }
         .submit-button, .google-form-button {
             background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px;
             cursor: pointer; text-align: center; margin-top: 10px;
@@ -124,6 +124,7 @@
                     continent: row.Continent,
                     link: row.Link,
                     Continent: determineZone(parseFloat(row.Latitude))
+                    link: row.Link
                 }));
                 filterAndDisplayData(newData);
             } catch (error) {
