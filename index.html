@@ -14,7 +14,7 @@
         body { font-family: Arial, sans-serif; }
         .container { display: flex; justify-content: space-between; align-items: flex-start; }
         .form-container { width: 50%; padding-right: 20px; }
-        #map { height: 500px; width: 45%; margin-top: 20px; }
+        #map { height: 500px; width: 50%; }
         .submit-button, .google-form-button {
             background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px;
             cursor: pointer; text-align: center; margin-top: 10px;
@@ -83,7 +83,7 @@
             <label for="heatmapToggle">Show Heatmap</label>
             <input type="checkbox" id="heatmapToggle">
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
-            <button onclick="window.open('https://docs.google.com/forms/d/e/1g046AIMh5Ki80GX546AC4hblz9sBzddB5lFjXQ7PqdU/edit?usp=sharing', '_blank')" class="google-form-button">
+            <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSegI3XJK7z3rwhdezy1sz3P8It2OQSDL_x0f12BUMxDH8CkKg/viewform?usp=sharing', '_blank')" class="google-form-button">
                 Submit New Research Data
             </button>
         </div>
@@ -122,8 +122,7 @@
                     concentration: parseFloat(row.Concentration),
                     year: parseInt(row.Year),
                     continent: row.Continent,
-                    link: row.Link,
-                    Continent: determineZone(parseFloat(row.Latitude))
+                    zone: determineZone(parseFloat(row.Latitude)), // Fix this line, set it to "zone"
                     link: row.Link
                 }));
                 filterAndDisplayData(newData);
@@ -151,7 +150,7 @@
                        (!selectedEnvironment || entry.environment === selectedEnvironment) &&
                        (!isNaN(yearStart) ? entry.year >= yearStart : true) &&
                        (!isNaN(yearEnd) ? entry.year <= yearEnd : true) &&
-                       (!selectedZone || entry.zone === selectedZone) &&
+                       (!selectedZone || entry.zone === selectedZone) &&  // This is the filter that checks the zone
                        (!selectedContinent || entry.continent === selectedContinent);
             });
 
@@ -169,7 +168,7 @@
         function addMarkers(entries) {
             entries.forEach(entry => {
                 const marker = L.marker(entry.coords)
-                    .bindPopup(<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year});
+                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
                 markerGroup.addLayer(marker);
             });
             if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
@@ -213,7 +212,7 @@
                 },
                 options: {
                     scales: { x: { title: { display: true, text: 'Year' } }, y: { beginAtZero: true, title: { display: true, text: 'Total Concentration (µg/g or µg/L)' } } },
-                    plugins: { title: { display: true, text: Total Yearly Concentration of ${data[0]?.analyte || 'Selected Analyte'} } }
+                    plugins: { title: { display: true, text: `Total Yearly Concentration of ${data[0]?.analyte || 'Selected Analyte'}` } }
                 }
             });
         }
