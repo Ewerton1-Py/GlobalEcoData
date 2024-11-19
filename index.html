@@ -25,10 +25,6 @@
 </head>
 <body>
     <h1>Submit Your Research</h1>
-    <p>Welcome to our research data repository. This platform aims to advance knowledge on environmental contaminants through collective contributions. Suggestions for further improvement are highly appreciated.</p>
-    <h2>How to Use This Platform</h2>
-    <p>Welcome! To explore data, please select from the filters provided and click "Load Approved Entries." You can filter by analyte, environment, year range, continent, and more. Only approved entries will display on the map and in the charts.</p>
-    <p>If you’d like to contribute, use the "Submit New Research Data" button. Your submission will be reviewed and approved by our team before it appears publicly on the platform.</p>
     <div class="container">
         <div class="form-container">
             <div class="filter-section">
@@ -97,9 +93,6 @@
                 <input type="checkbox" id="heatmapToggle">
             </div>
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
-            <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSegI3XJK7z3rwhdezy1sz3P8It2OQSDL_x0f12BUMxDH8CkKg/viewform?usp=sharing', '_blank')" class="google-form-button">
-                Submit New Research Data
-            </button>
         </div>
         <div id="map"></div>
     </div>
@@ -112,14 +105,14 @@
     </div>
 
     <script>
-        const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyZKigN6pFCSAjj5js1p-zJW3P0FPlbHu8T-FfupmyeOaTLBDe1LC7obrrDyiYkylD9BA/exec';
+        const SHEET_API_URL = 'https://script.google.com/macros/s/YOUR_SHEET_API_URL/exec';
 
         const map = L.map('map').setView([20, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
         let markerGroup = L.featureGroup().addTo(map);
         let histogramChart, boxplotChart, heatmapLayer;
-        let filteredData; // Define filteredData globally
+        let filteredData;
 
         document.getElementById('heatmapToggle').addEventListener('change', toggleHeatmap);
         document.getElementById('loadEntries').addEventListener('click', loadData);
@@ -136,7 +129,7 @@
                     concentration: parseFloat(row.Concentration),
                     year: parseInt(row.Year),
                     continent: row.Continent,
-                    zone: determineZone(parseFloat(row.Latitude)), 
+                    zone: determineZone(parseFloat(row.Latitude)),
                     link: row.Link
                 }));
                 filterAndDisplayData(newData);
@@ -194,12 +187,68 @@
             heatmapLayer = L.heatLayer(heatmapData, { radius: 25, blur: 15, maxZoom: 5 }).addTo(map);
         }
 
-        function toggleHeatmap() {
-            if (filteredData && document.getElementById('heatmapToggle').checked) {
-                updateHeatmap(filteredData);
-            } else if (heatmapLayer) {
-                map.removeLayer(heatmapLayer);
-            }
+        function plotHistogram(data) {
+            const concentrationByYear = data.reduce((acc, entry) => {
+                acc[entry.year] = (acc[entry.year] || 0) + entry.concentration;
+                return acc;
+            }, {});
+            const years = Object.keys(concentrationByYear);
+            const totalConcentrations = Object.values(concentrationByYear);
+
+            if (histogramChart) histogramChart.destroy();
+            const ctx = document.getElementById('concentrationHistogram').getContext('2d');
+            histogramChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Total Concentration (µg/g or µg/L)',
+                        data: totalConcentrations,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'Year' } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Concentration (µg/g or µg/L)' } }
+                    },
+                    plugins: { title: { display: true, text: 'Yearly Total Concentrations' } }
+                }
+            });
+        }
+
+        function plotBoxplot(data) {
+            const environmentGroups = data.reduce((acc, entry) => {
+                acc[entry.environment] = acc[entry.environment] || [];
+                acc[entry.environment].push(entry.concentration);
+                return acc;
+            }, {});
+            const environments = Object.keys(environmentGroups);
+            const boxplotData = environments.map(env => environmentGroups[env]);
+
+            if (boxplotChart) boxplotChart.destroy();
+            const ctx = document.getElementById('concentrationBoxplot').getContext('2d');
+            boxplotChart = new Chart(ctx, {
+                type: 'boxplot',
+                data: {
+                    labels: environments,
+                    datasets: [{
+                        label: 'Concentration by Environment',
+                        data: boxplotData,
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Concentration (µg/g or µg/L)' } }
+                    },
+                    plugins: { title: { display: true, text: 'Concentration Distribution by Environment' } }
+                }
+            });
         }
     </script>
 </body>
