@@ -8,73 +8,51 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxplot@2.1.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxplot@2.1.0"></script> <!-- For boxplot support -->
 
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 20px;
-        }
-        .container { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            gap: 20px;
-        }
-        .form-container { 
-            width: 50%; 
-        }
-        #map { 
-            height: 500px; 
-            width: 50%; 
+        body { font-family: Arial, sans-serif; }
+        .container { display: flex; justify-content: space-between; align-items: flex-start; }
+        .form-container { width: 50%; padding-right: 20px; }
+        #map { height: 500px; width: 50%; }
+        .submit-button, .google-form-button {
+            background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px;
+            cursor: pointer; text-align: center; margin-top: 10px;
         }
         .filter-group {
-            margin-bottom: 15px;
+            margin-bottom: 15px; /* Adds spacing between filters */
         }
-        .filter-group label {
+        label {
             display: block;
-            margin-bottom: 5px;
+            font-weight: bold;
+            margin-bottom: 5px; /* Adds spacing between label and input */
         }
-        .filter-group select,
-        .filter-group input {
-            width: 100%;
+        select, input {
+            width: 100%; /* Makes the dropdowns and inputs full width */
             padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .submit-button, 
-        .google-form-button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
+            font-size: 14px;
+            border: 1px solid #ccc;
             border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
+        }
+        .filter-buttons {
+            margin-top: 20px;
+        }
+        .submit-button, .google-form-button {
+            width: 100%; /* Makes buttons full width */
             margin-top: 10px;
-            width: 100%;
         }
-        #chartContainer, 
-        #histogramContainer, 
-        #boxplotContainer { 
-            width: 100%; 
-            height: 400px; 
-            margin-top: 20px; 
-        }
+        #chartContainer, #histogramContainer, #boxplotContainer { width: 100%; height: 400px; margin-top: 20px; }
     </style>
 </head>
 <body>
     <h1>Submit Your Research</h1>
     <p>Welcome to our research data repository. This platform aims to advance knowledge on environmental contaminants through collective contributions. Suggestions for further improvement are highly appreciated.</p>
-    
     <h2>How to Use This Platform</h2>
     <p>Welcome! To explore data, please select from the filters provided and click "Load Approved Entries." You can filter by analyte, environment, year range, continent, and more. Only approved entries will display on the map and in the charts.</p>
-    <p>If you'd like to contribute, use the "Submit New Research Data" button. Your submission will be reviewed and approved by our team before it appears publicly on the platform.</p>
-
+    <p>If you’d like to contribute, use the "Submit New Research Data" button. Your submission will be reviewed and approved by our team before it appears publicly on the platform.</p>
     <div class="container">
         <div class="form-container">
             <p>Select filters, then click to load data:</p>
-
             <div class="filter-group">
                 <label for="analyte">Select Analyte:</label>
                 <select id="analyte">
@@ -91,7 +69,6 @@
                     <option value="Heavy Metals">Heavy Metals</option>
                 </select>
             </div>
-
             <div class="filter-group">
                 <label for="environment">Select Environment:</label>
                 <select id="environment">
@@ -107,17 +84,14 @@
                     <option value="Ice and Snow">Ice and Snow</option>
                 </select>
             </div>
-
             <div class="filter-group">
                 <label for="yearStart">Start Year:</label>
-                <input type="number" id="yearStart" placeholder="e.g., 2000">
+                <input type="text" id="yearStart" placeholder="e.g., 2000">
             </div>
-
             <div class="filter-group">
                 <label for="yearEnd">End Year:</label>
-                <input type="number" id="yearEnd" placeholder="e.g., 2022">
+                <input type="text" id="yearEnd" placeholder="e.g., 2022">
             </div>
-
             <div class="filter-group">
                 <label for="zone">Select Zone:</label>
                 <select id="zone">
@@ -127,7 +101,6 @@
                     <option value="Tropics">Tropics</option>
                 </select>
             </div>
-
             <div class="filter-group">
                 <label for="continent">Select Continent:</label>
                 <select id="continent">
@@ -141,18 +114,16 @@
                     <option value="Antarctica">Antarctica</option>
                 </select>
             </div>
-
             <div class="filter-group">
-                <label>
-                    <input type="checkbox" id="heatmapToggle">
-                    Show Heatmap
-                </label>
+                <label for="heatmapToggle">Show Heatmap</label>
+                <input type="checkbox" id="heatmapToggle">
             </div>
-
-            <button id="loadEntries" class="submit-button">Load Approved Entries</button>
-            <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSegI3XJK7z3rwhdezy1sz3P8It2OQSDL_x0f12BUMxDH8CkKg/viewform?usp=sharing', '_blank')" class="google-form-button">
-                Submit New Research Data
-            </button>
+            <div class="filter-buttons">
+                <button id="loadEntries" class="submit-button">Load Approved Entries</button>
+                <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSegI3XJK7z3rwhdezy1sz3P8It2OQSDL_x0f12BUMxDH8CkKg/viewform?usp=sharing', '_blank')" class="google-form-button">
+                    Submit New Research Data
+                </button>
+            </div>
         </div>
         <div id="map"></div>
     </div>
@@ -163,9 +134,5 @@
     <div id="boxplotContainer">
         <canvas id="concentrationBoxplot"></canvas>
     </div>
-
-    <script>
-        // Your existing JavaScript code remains the same
-    </script>
 </body>
 </html>
