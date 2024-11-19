@@ -14,137 +14,16 @@
         body { font-family: Arial, sans-serif; }
         .container { display: flex; justify-content: space-between; align-items: flex-start; }
         .form-container { width: 50%; padding-right: 20px; }
-        #map { height: 500px; width: 60%; }
+        #map { height: 500px; width: 50%; }
         .submit-button, .google-form-button {
             background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px;
             cursor: pointer; text-align: center; margin-top: 10px;
         }
+        .error { color: red; font-size: 0.9em; margin-top: 5px; }
         #chartContainer, #histogramContainer, #boxplotContainer { width: 100%; height: 400px; margin-top: 20px; }
     </style>
 </head>
 <body>
-<script>
-    // Add input validation and sanitization functions here
-    function validateAndSanitizeInput() {
-        const analyte = document.getElementById('analyte').value;
-        const environment = document.getElementById('environment').value;
-        const yearStart = document.getElementById('yearStart').value;
-        const yearEnd = document.getElementById('yearEnd').value;
-        const zone = document.getElementById('zone').value;
-        const continent = document.getElementById('continent').value;
-
-        // Validate Year Range
-        if (yearStart && isNaN(yearStart) || yearStart < 1900 || yearStart > new Date().getFullYear()) {
-            alert("Please enter a valid start year (e.g., 2000).");
-            return false;
-        }
-
-        if (yearEnd && isNaN(yearEnd) || yearEnd < 1900 || yearEnd > new Date().getFullYear()) {
-            alert("Please enter a valid end year (e.g., 2022).");
-            return false;
-        }
-
-        // Sanitize the inputs (encode special characters to prevent XSS)
-        const sanitizedAnalyte = sanitizeInput(analyte);
-        const sanitizedEnvironment = sanitizeInput(environment);
-        const sanitizedZone = sanitizeInput(zone);
-        const sanitizedContinent = sanitizeInput(continent);
-
-        // Set the sanitized values back (in case you need to send them somewhere)
-        document.getElementById('analyte').value = sanitizedAnalyte;
-        document.getElementById('environment').value = sanitizedEnvironment;
-        document.getElementById('zone').value = sanitizedZone;
-        document.getElementById('continent').value = sanitizedContinent;
-
-        // You can return sanitized and validated data to be used for further processing
-        return {
-            analyte: sanitizedAnalyte,
-            environment: sanitizedEnvironment,
-            yearStart: yearStart,
-            yearEnd: yearEnd,
-            zone: sanitizedZone,
-            continent: sanitizedContinent
-        };
-    }
-
-    function sanitizeInput(input) {
-        if (!input) return '';
-        return input.replace(/[&<>"'\/]/g, function (match) {
-            const escapes = {
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#x27;",
-                "/": "&#x2F;"
-            };
-            return escapes[match];
-        });
-    }
-
-    // Ensure validateAndSanitizeInput is called before processing user inputs
-    async function loadData() {
-        try {
-            // Validate and sanitize user input
-            const sanitizedInputs = validateAndSanitizeInput();
-            if (!sanitizedInputs) return; // Stop the process if validation fails
-
-            const response = await fetch(SHEET_API_URL);
-            const data = await response.json();
-
-            const newData = data.map(row => ({
-                coords: [parseFloat(row.Latitude), parseFloat(row.Longitude)],
-                title: sanitizeInput(row.PaperTitle),
-                analyte: sanitizeInput(row.Analyte),
-                environment: sanitizeInput(row.Environment),
-                concentration: parseFloat(row.Concentration),
-                year: parseInt(row.Year),
-                continent: sanitizeInput(row.Continent),
-                zone: sanitizeInput(determineZone(parseFloat(row.Latitude))),
-                link: sanitizeInput(row.Link)
-            }));
-
-            // Now use sanitized data
-            filterAndDisplayData(newData);
-        } catch (error) {
-            console.error('Error loading data:', error);
-        }
-    }
-
-    function determineZone(lat) {
-        if (lat >= 66.5 || lat <= -66.5) return 'Frigid Zone';
-        else if ((lat >= 23.5 && lat < 66.5) || (lat <= -23.5 && lat > -66.5)) return 'Temperate Zone';
-        else return 'Tropics';
-    }
-
-    function filterAndDisplayData(data) {
-        const selectedAnalyte = document.getElementById('analyte').value;
-        const selectedEnvironment = document.getElementById('environment').value;
-        const yearStart = parseInt(document.getElementById('yearStart').value);
-        const yearEnd = parseInt(document.getElementById('yearEnd').value);
-        const selectedZone = document.getElementById('zone').value;
-        const selectedContinent = document.getElementById('continent').value;
-
-        filteredData = data.filter(entry => {
-            return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
-                (!selectedEnvironment || entry.environment === selectedEnvironment) &&
-                (!isNaN(yearStart) ? entry.year >= yearStart : true) &&
-                (!isNaN(yearEnd) ? entry.year <= yearEnd : true) &&
-                (!selectedZone || entry.zone === selectedZone) &&
-                (!selectedContinent || entry.continent === selectedContinent);
-        });
-
-        clearMarkers();
-        addMarkers(filteredData);
-        plotHistogram(filteredData);
-        plotBoxplot(filteredData);
-        if (document.getElementById('heatmapToggle').checked) updateHeatmap(filteredData);
-    }
-
-    // Other existing functions (addMarkers, clearMarkers, plotHistogram, etc.)
-</script>
-<html>
-    
     <h1>Submit Your Research</h1>
     <p>Welcome to our research data repository. This platform aims to advance knowledge on environmental contaminants through collective contributions. Suggestions for further improvement are highly appreciated.</p>
     <h2>How to Use This Platform</h2>
@@ -152,7 +31,6 @@
     <p>If you’d like to contribute, use the "Submit New Research Data" button. Your submission will be reviewed and approved by our team before it appears publicly on the platform.</p>
     <div class="container">
         <div class="form-container">
-            <p>Select filters, then click to load data:</p>
             <label for="analyte">Select Analyte:</label>
             <select id="analyte">
                 <option value="">All</option>
@@ -167,6 +45,8 @@
                 <option value="Synthetic Polymers">Synthetic Polymers</option>
                 <option value="Heavy Metals">Heavy Metals</option>
             </select>
+            <span id="analyteError" class="error"></span>
+
             <label for="environment">Select Environment:</label>
             <select id="environment">
                 <option value="">All</option>
@@ -180,10 +60,16 @@
                 <option value="Soil">Soil</option>
                 <option value="Ice and Snow">Ice and Snow</option>
             </select>
+            <span id="environmentError" class="error"></span>
+
             <label for="yearStart">Start Year:</label>
             <input type="text" id="yearStart" placeholder="e.g., 2000">
+            <span id="yearStartError" class="error"></span>
+
             <label for="yearEnd">End Year:</label>
             <input type="text" id="yearEnd" placeholder="e.g., 2022">
+            <span id="yearEndError" class="error"></span>
+
             <label for="zone">Select Zone:</label>
             <select id="zone">
                 <option value="">All</option>
@@ -191,6 +77,8 @@
                 <option value="Temperate Zone">Temperate Zone</option>
                 <option value="Tropics">Tropics</option>
             </select>
+            <span id="zoneError" class="error"></span>
+
             <label for="continent">Select Continent:</label>
             <select id="continent">
                 <option value="">All</option>
@@ -202,6 +90,8 @@
                 <option value="South America">South America</option>
                 <option value="Antarctica">Antarctica</option>
             </select>
+            <span id="continentError" class="error"></span>
+
             <label for="heatmapToggle">Show Heatmap</label>
             <input type="checkbox" id="heatmapToggle">
             <button id="loadEntries" class="submit-button">Load Approved Entries</button>
@@ -222,152 +112,58 @@
     <script>
         const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyZKigN6pFCSAjj5js1p-zJW3P0FPlbHu8T-FfupmyeOaTLBDe1LC7obrrDyiYkylD9BA/exec';
 
-        const map = L.map('map').setView([20, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        // Sanitization Function
+        function sanitizeInput(input) {
+            if (!input) return '';
+            return input.replace(/[&<>"'\/]/g, function (match) {
+                const escapes = {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#x27;",
+                    "/": "&#x2F;"
+                };
+                return escapes[match];
+            });
+        }
 
-        let markerGroup = L.featureGroup().addTo(map);
-        let histogramChart, boxplotChart, heatmapLayer;
-        let filteredData; // Define filteredData globally
+        // Input Validation
+        function validateAndSanitizeInput() {
+            const yearStart = document.getElementById('yearStart').value;
+            const yearEnd = document.getElementById('yearEnd').value;
 
-        document.getElementById('heatmapToggle').addEventListener('change', toggleHeatmap);
-        document.getElementById('loadEntries').addEventListener('click', loadData);
+            let isValid = true;
 
-        async function loadData() {
+            // Clear previous errors
+            document.getElementById('yearStartError').textContent = '';
+            document.getElementById('yearEndError').textContent = '';
+
+            // Validate Year Inputs
+            if (yearStart && (isNaN(yearStart) || yearStart < 1900 || yearStart > new Date().getFullYear())) {
+                document.getElementById('yearStartError').textContent = 'Invalid start year!';
+                isValid = false;
+            }
+            if (yearEnd && (isNaN(yearEnd) || yearEnd < 1900 || yearEnd > new Date().getFullYear())) {
+                document.getElementById('yearEndError').textContent = 'Invalid end year!';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Example: Event Listener for Data Load
+        document.getElementById('loadEntries').addEventListener('click', async () => {
+            if (!validateAndSanitizeInput()) return;
+
             try {
                 const response = await fetch(SHEET_API_URL);
                 const data = await response.json();
-                const newData = data.map(row => ({
-                    coords: [parseFloat(row.Latitude), parseFloat(row.Longitude)],
-                    title: row.PaperTitle,
-                    analyte: row.Analyte,
-                    environment: row.Environment,
-                    concentration: parseFloat(row.Concentration),
-                    year: parseInt(row.Year),
-                    continent: row.Continent,
-                    zone: determineZone(parseFloat(row.Latitude)), // Fix this line, set it to "zone"
-                    link: row.Link
-                }));
-                filterAndDisplayData(newData);
-            } catch (error) {
-                console.error('Error loading data:', error);
+                console.log('Data loaded:', data); // Debugging
+            } catch (err) {
+                console.error('Error loading data:', err);
             }
-        }
-
-        function determineZone(lat) {
-            if (lat >= 66.5 || lat <= -66.5) return 'Frigid Zone';
-            else if ((lat >= 23.5 && lat < 66.5) || (lat <= -23.5 && lat > -66.5)) return 'Temperate Zone';
-            else return 'Tropics';
-        }
-
-        function filterAndDisplayData(data) {
-            const selectedAnalyte = document.getElementById('analyte').value;
-            const selectedEnvironment = document.getElementById('environment').value;
-            const yearStart = parseInt(document.getElementById('yearStart').value);
-            const yearEnd = parseInt(document.getElementById('yearEnd').value);
-            const selectedZone = document.getElementById('zone').value;
-            const selectedContinent = document.getElementById('continent').value;
-
-            filteredData = data.filter(entry => {
-                return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
-                       (!selectedEnvironment || entry.environment === selectedEnvironment) &&
-                       (!isNaN(yearStart) ? entry.year >= yearStart : true) &&
-                       (!isNaN(yearEnd) ? entry.year <= yearEnd : true) &&
-                       (!selectedZone || entry.zone === selectedZone) &&  // This is the filter that checks the zone
-                       (!selectedContinent || entry.continent === selectedContinent);
-            });
-
-            clearMarkers();
-            addMarkers(filteredData);
-            plotHistogram(filteredData);
-            plotBoxplot(filteredData);
-            if (document.getElementById('heatmapToggle').checked) updateHeatmap(filteredData);
-        }
-
-        function clearMarkers() {
-            markerGroup.clearLayers();
-        }
-
-        function addMarkers(entries) {
-            entries.forEach(entry => {
-                const marker = L.marker(entry.coords)
-                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
-                markerGroup.addLayer(marker);
-            });
-            if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
-        }
-
-        function updateHeatmap(data) {
-            const heatmapData = data.map(entry => [entry.coords[0], entry.coords[1], entry.concentration]);
-            if (heatmapLayer) map.removeLayer(heatmapLayer);
-            heatmapLayer = L.heatLayer(heatmapData, { radius: 25, blur: 15, maxZoom: 5 }).addTo(map);
-        }
-
-        function toggleHeatmap() {
-            if (filteredData && document.getElementById('heatmapToggle').checked) {
-                updateHeatmap(filteredData);
-            } else if (heatmapLayer) {
-                map.removeLayer(heatmapLayer);
-            }
-        }
-
-        function plotHistogram(data) {
-            const concentrationByYear = data.reduce((acc, entry) => {
-                acc[entry.year] = (acc[entry.year] || 0) + entry.concentration;
-                return acc;
-            }, {});
-            const years = Object.keys(concentrationByYear);
-            const totalConcentrations = Object.values(concentrationByYear);
-
-            if (histogramChart) histogramChart.destroy();
-            const ctx = document.getElementById('concentrationHistogram').getContext('2d');
-            histogramChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        label: 'Total Concentration (µg/g or µg/L)',
-                        data: totalConcentrations,
-                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: { x: { title: { display: true, text: 'Year' } }, y: { beginAtZero: true, title: { display: true, text: 'Total Concentration (µg/g or µg/L)' } } },
-                    plugins: { title: { display: true, text: `Total Yearly Concentration of ${data[0]?.analyte || 'Selected Analyte'}` } }
-                }
-            });
-        }
-
-        function plotBoxplot(data) {
-            const environmentGroups = data.reduce((acc, entry) => {
-                acc[entry.environment] = acc[entry.environment] || [];
-                acc[entry.environment].push(entry.concentration);
-                return acc;
-            }, {});
-            const environments = Object.keys(environmentGroups);
-            const boxplotData = environments.map(env => environmentGroups[env]);
-
-            if (boxplotChart) boxplotChart.destroy();
-            const ctx = document.getElementById('concentrationBoxplot').getContext('2d');
-            boxplotChart = new Chart(ctx, {
-                type: 'boxplot',
-                data: {
-                    labels: environments,
-                    datasets: [{
-                        label: 'Concentration by Environment',
-                        data: boxplotData,
-                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Concentration (µg/g or µg/L)' } } },
-                    plugins: { title: { display: true, text: 'Concentration Distribution by Environment' } }
-                }
-            });
-           }
+        });
     </script>
 </body>
 </html>
