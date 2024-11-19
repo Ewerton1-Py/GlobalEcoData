@@ -122,8 +122,8 @@
                     concentration: parseFloat(row.Concentration),
                     year: parseInt(row.Year),
                     continent: row.Continent,
-                    zone: determineZone(parseFloat(row.Latitude)), // Fix this line, set it to "zone"
-                    link: row.Link
+                    link: row.Link,
+                    Continent: determineZone(parseFloat(row.Latitude))
                 }));
                 filterAndDisplayData(newData);
             } catch (error) {
@@ -150,7 +150,7 @@
                        (!selectedEnvironment || entry.environment === selectedEnvironment) &&
                        (!isNaN(yearStart) ? entry.year >= yearStart : true) &&
                        (!isNaN(yearEnd) ? entry.year <= yearEnd : true) &&
-                       (!selectedZone || entry.zone === selectedZone) &&  // This is the filter that checks the zone
+                       (!selectedZone || entry.zone === selectedZone) &&
                        (!selectedContinent || entry.continent === selectedContinent);
             });
 
