@@ -215,8 +215,7 @@
         function addMarkers(entries) {
             entries.forEach(entry => {
                 const marker = L.marker(entry.coords)
-                    .bindPopup(<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year});
-                markerGroup.addLayer(marker);
+                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`); markerGroup.addLayer(marker);
             });
             if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
         }
