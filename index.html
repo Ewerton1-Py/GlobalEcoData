@@ -88,10 +88,6 @@
                     <option value="Ice and Snow">Ice and Snow</option>
                 </select>
             </div>
-            <div class="filter-section" id="secondaryFilterSection" style="display: none;">
-                <label for="secondaryFilter">Refine Environment:</label>
-                <select id="secondaryFilter"></select>
-            </div>
             <div class="filter-section">
                 <label for="yearStart">Start Year:</label>
                 <input type="text" id="yearStart" placeholder="e.g., 2000">
@@ -132,37 +128,6 @@
             </button>
         </div>
         <div id="map"></div>
-    </div>
-    <script>
-        function updateSecondaryFilter() {
-            const environment = document.getElementById("environment").value;
-            const secondaryFilterSection = document.getElementById("secondaryFilterSection");
-            const secondaryFilter = document.getElementById("secondaryFilter");
-
-            secondaryFilter.innerHTML = ""; // Clear existing options
-
-            if (["Surface Water", "Sediment", "Suspended Particulate Matter"].includes(environment)) {
-                secondaryFilterSection.style.display = "block";
-                const options = ["All", "River", "Lake", "Ocean"];
-                options.forEach(option => {
-                    const opt = document.createElement("option");
-                    opt.value = option;
-                    opt.textContent = option;
-                    secondaryFilter.appendChild(opt);
-                });
-            } else if (environment === "Soil") {
-                secondaryFilterSection.style.display = "block";
-                const options = ["All", "Agricultural Soil", "Urban Soil", "Forest Soil", "Industrial Soil"];
-                options.forEach(option => {
-                    const opt = document.createElement("option");
-                    opt.value = option;
-                    opt.textContent = option;
-                    secondaryFilter.appendChild(opt);
-                });
-            } else {
-                secondaryFilterSection.style.display = "none";
-            }
-        }
     </div>
     <div class="section">
         <h2>Accessibility</h2>
@@ -250,7 +215,7 @@
         function addMarkers(entries) {
             entries.forEach(entry => {
                 const marker = L.marker(entry.coords)
-                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
+                    .bindPopup(<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year});
                 markerGroup.addLayer(marker);
             });
             if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
