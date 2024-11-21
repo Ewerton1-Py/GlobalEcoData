@@ -88,10 +88,6 @@
                     <option value="Ice and Snow">Ice and Snow</option>
                 </select>
             </div>
-            <div class="filter-section" id="secondaryFilterSection" style="display: none;">
-                <label for="secondaryFilter">Refine Environment:</label>
-                <select id="secondaryFilter"></select>
-            <div>
             <div class="filter-section">
                 <label for="yearStart">Start Year:</label>
                 <input type="text" id="yearStart" placeholder="e.g., 2000">
@@ -147,36 +143,7 @@
     <div id="boxplotContainer">
         <canvas id="concentrationBoxplot"></canvas>
     </div>
-    <script>
-        function updateSecondaryFilter() {
-            const environment = document.getElementById("environment").value;
-            const secondaryFilterSection = document.getElementById("secondaryFilterSection");
-            const secondaryFilter = document.getElementById("secondaryFilter");
 
-            secondaryFilter.innerHTML = "";
-
-            if (["Surface Water", "Sediment", "Suspended Particulate Matter"].includes(environment)) {
-                secondaryFilterSection.style.display = "block";
-                const options = ["All", "River", "Lake", "Ocean"];
-                options.forEach(opt => {
-                    const optionElement = document.createElement("option");
-                    optionElement.value = opt;
-                    optionElement.textContent = opt;
-                    secondaryFilter.appendChild(optionElement);
-                });
-            } else if (environment === "Soil") {
-                secondaryFilterSection.style.display = "block";
-                const options = ["All", "Agricultural Soil", "Urban Soil", "Forest Soil", "Industrial Soil", "Desert Soil"];
-                options.forEach(opt => {
-                    const optionElement = document.createElement("option");
-                    optionElement.value = opt;
-                    optionElement.textContent = opt;
-                    secondaryFilter.appendChild(optionElement);
-                });
-            } else {
-                secondaryFilterSection.style.display = "none";
-            }
-        }
     <script>
         const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyZKigN6pFCSAjj5js1p-zJW3P0FPlbHu8T-FfupmyeOaTLBDe1LC7obrrDyiYkylD9BA/exec';
 
@@ -248,7 +215,7 @@
         function addMarkers(entries) {
             entries.forEach(entry => {
                 const marker = L.marker(entry.coords)
-                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
+                    .bindPopup(<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year});
                 markerGroup.addLayer(marker);
             });
             if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
