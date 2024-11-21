@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxplot@2.1.0"></script> <!-- For boxplot support -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxplot@2.1.0"></script>
 
     <style>
         body { font-family: Arial, sans-serif; }
@@ -18,17 +18,16 @@
         .submit-button, .google-form-button {
             background-color: #4CAF50; /* Green color */
             color: white; 
-            padding: 10px 20px; /* Smaller padding for a compact size */
-            font-size: 14px; /* Smaller font size */
+            padding: 10px 20px; 
+            font-size: 14px; 
             border: none; 
-            border-radius: 5px; /* Slightly smaller border radius */
+            border-radius: 5px; 
             cursor: pointer; 
             text-align: center; 
-            margin-top: 5px; /* Reduce margin to save vertical space */
-            height: auto; /* Allow height to adjust dynamically */
-            width: 300px; /* Set a specific width if needed */
+            margin-top: 5px; 
+            height: auto; 
+            width: 300px; 
         }
-
         #chartContainer, #histogramContainer, #boxplotContainer { width: 100%; height: 400px; margin-top: 20px; }
         .filter-section { margin-bottom: 15px; }
     </style>
@@ -52,9 +51,7 @@
         <h2>How to Use This Platform</h2>
         <p>To explore data, use the filters below and click "Load Approved Entries." Filter by analyte, environment, year range, zone, or continent. You can also visualize the data on the map, view heatmaps, and analyze trends through charts.</p>
     </div>
-    <h2>How to Use This Platform</h2>
-    <p>Welcome! To explore data, please select from the filters provided and click "Load Approved Entries." You can filter by analyte, environment, year range, continent, and more. Only approved entries will display on the map and in the charts.</p>
-    <p>If you’d like to contribute, use the "Submit New Research Data" button. Your submission will be reviewed and approved by our team before it appears publicly on the platform.</p>
+    
     <div class="container">
         <div class="form-container">
             <div class="filter-section">
@@ -129,6 +126,7 @@
         </div>
         <div id="map"></div>
     </div>
+    
     <div class="section">
         <h2>Accessibility</h2>
         <p>This platform is designed with accessibility in mind. If you encounter any difficulties, feel free to reach out to us.</p>
@@ -137,6 +135,7 @@
         <h2>Contact Us</h2>
         <p>Email: <a href="mailto:ewe.neg@gmail.com">ewe.neg@gmail.com</a></p>
     </div>
+    
     <div id="histogramContainer">
         <canvas id="concentrationHistogram"></canvas>
     </div>
@@ -146,94 +145,95 @@
 
     <script>
         const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbyZKigN6pFCSAjj5js1p-zJW3P0FPlbHu8T-FfupmyeOaTLBDe1LC7obrrDyiYkylD9BA/exec';
-    document.addEventListener('DOMContentLoaded', () => {
-        const map = L.map('map').setView([20, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    });
 
-        let markerGroup = L.featureGroup().addTo(map);
-        let histogramChart, boxplotChart, heatmapLayer;
-        let filteredData; // Define filteredData globally
+        document.addEventListener('DOMContentLoaded', () => {
+            const map = L.map('map').setView([20, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-        document.getElementById('heatmapToggle').addEventListener('change', toggleHeatmap);
-        document.getElementById('loadEntries').addEventListener('click', loadData);
+            let markerGroup = L.featureGroup().addTo(map);
+            let histogramChart, boxplotChart, heatmapLayer;
+            let filteredData;
 
-        async function loadData() {
-            try {
-                const response = await fetch(SHEET_API_URL);
-                const data = await response.json();
-                const newData = data.map(row => ({
-                    coords: [parseFloat(row.Latitude), parseFloat(row.Longitude)],
-                    title: row.PaperTitle,
-                    analyte: row.Analyte,
-                    environment: row.Environment,
-                    concentration: parseFloat(row.Concentration),
-                    year: parseInt(row.Year),
-                    continent: row.Continent,
-                    zone: determineZone(parseFloat(row.Latitude)), 
-                    link: row.Link
-                }));
-                filterAndDisplayData(newData);
-            } catch (error) {
-                console.error('Error loading data:', error);
+            document.getElementById('heatmapToggle').addEventListener('change', toggleHeatmap);
+            document.getElementById('loadEntries').addEventListener('click', loadData);
+
+            async function loadData() {
+                try {
+                    const response = await fetch(SHEET_API_URL);
+                    const data = await response.json();
+                    const newData = data.map(row => ({
+                        coords: [parseFloat(row.Latitude), parseFloat(row.Longitude)],
+                        title: row.PaperTitle,
+                        analyte: row.Analyte,
+                        environment: row.Environment,
+                        concentration: parseFloat(row.Concentration),
+                        year: parseInt(row.Year),
+                        continent: row.Continent,
+                        zone: determineZone(parseFloat(row.Latitude)), 
+                        link: row.Link
+                    }));
+                    filterAndDisplayData(newData);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                }
             }
-        }
 
-        function determineZone(lat) {
-            if (lat >= 66.5 || lat <= -66.5) return 'Frigid Zone';
-            else if ((lat >= 23.5 && lat < 66.5) || (lat <= -23.5 && lat > -66.5)) return 'Temperate Zone';
-            else return 'Tropics';
-        }
-
-        function filterAndDisplayData(data) {
-            const selectedAnalyte = document.getElementById('analyte').value;
-            const selectedEnvironment = document.getElementById('environment').value;
-            const yearStart = parseInt(document.getElementById('yearStart').value);
-            const yearEnd = parseInt(document.getElementById('yearEnd').value);
-            const selectedZone = document.getElementById('zone').value;
-            const selectedContinent = document.getElementById('continent').value;
-
-            filteredData = data.filter(entry => {
-                return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
-                       (!selectedEnvironment || entry.environment === selectedEnvironment) &&
-                       (!isNaN(yearStart) ? entry.year >= yearStart : true) &&
-                       (!isNaN(yearEnd) ? entry.year <= yearEnd : true) &&
-                       (!selectedZone || entry.zone === selectedZone) &&
-                       (!selectedContinent || entry.continent === selectedContinent);
-            });
-
-            clearMarkers();
-            addMarkers(filteredData);
-            plotHistogram(filteredData);
-            plotBoxplot(filteredData);
-            if (document.getElementById('heatmapToggle').checked) updateHeatmap(filteredData);
-        }
-
-        function clearMarkers() {
-            markerGroup.clearLayers();
-        }
-
-        function addMarkers(entries) {
-            entries.forEach(entry => {
-                const marker = L.marker(entry.coords)
-                    .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
-markerGroup.addLayer(marker);
-            if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
-        }
-
-        function updateHeatmap(data) {
-            const heatmapData = data.map(entry => [entry.coords[0], entry.coords[1], entry.concentration]);
-            if (heatmapLayer) map.removeLayer(heatmapLayer);
-            heatmapLayer = L.heatLayer(heatmapData, { radius: 25, blur: 15, maxZoom: 5 }).addTo(map);
-        }
-
-        function toggleHeatmap() {
-            if (filteredData && document.getElementById('heatmapToggle').checked) {
-                updateHeatmap(filteredData);
-            } else if (heatmapLayer) {
-                map.removeLayer(heatmapLayer);
+            function determineZone(lat) {
+                if (lat >= 66.5 || lat <= -66.5) return 'Frigid Zone';
+                else if ((lat >= 23.5 && lat < 66.5) || (lat <= -23.5 && lat > -66.5)) return 'Temperate Zone';
+                else return 'Tropics';
             }
-        }
+
+            function filterAndDisplayData(data) {
+                const selectedAnalyte = document.getElementById('analyte').value;
+                const selectedEnvironment = document.getElementById('environment').value;
+                const yearStart = parseInt(document.getElementById('yearStart').value);
+                const yearEnd = parseInt(document.getElementById('yearEnd').value);
+                const selectedZone = document.getElementById('zone').value;
+                const selectedContinent = document.getElementById('continent').value;
+
+                filteredData = data.filter(entry => {
+                    return (!selectedAnalyte || entry.analyte === selectedAnalyte) &&
+                           (!selectedEnvironment || entry.environment === selectedEnvironment) &&
+                           (!isNaN(yearStart) ? entry.year >= yearStart : true) &&
+                           (!isNaN(yearEnd) ? entry.year <= yearEnd : true) &&
+                           (!selectedZone || entry.zone === selectedZone) &&
+                           (!selectedContinent || entry.continent === selectedContinent);
+                });
+
+                clearMarkers();
+                addMarkers(filteredData);
+                // Call your chart plotting functions here if needed
+                if (document.getElementById('heatmapToggle').checked) updateHeatmap(filteredData);
+            }
+
+            function clearMarkers() {
+                markerGroup.clearLayers();
+            }
+
+            function addMarkers(entries) {
+                entries.forEach(entry => {
+                    const marker = L.marker(entry.coords)
+                        .bindPopup(`<b>${entry.title}</b><br>Analyte: ${entry.analyte}<br>Environment: ${entry.environment}<br>Concentration: ${entry.concentration} µg/g<br>Year: ${entry.year}`);
+                    markerGroup.addLayer(marker);
+                });
+                if (entries.length > 0) map.fitBounds(markerGroup.getBounds());
+            }
+
+            function updateHeatmap(data) {
+                const heatmapData = data.map(entry => [entry.coords[0], entry.coords[1], entry.concentration]);
+                if (heatmapLayer) map.removeLayer(heatmapLayer);
+                heatmapLayer = L.heatLayer(heatmapData, { radius: 25, blur: 15, maxZoom: 5 }).addTo(map);
+            }
+
+            function toggleHeatmap() {
+                if (filteredData && document.getElementById('heatmapToggle').checked) {
+                    updateHeatmap(filteredData);
+                } else if (heatmapLayer) {
+                    map.removeLayer(heatmapLayer);
+                }
+            }
+        });
     </script>
 </body>
 </html>
