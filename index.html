@@ -199,6 +199,7 @@
 
     <script>
         const SHEET_API_URL = process.env.SHEET_API_URL;
+        console.log('SHEET_API_URL:', SHEET_API_URL);
 
         document.addEventListener('DOMContentLoaded', () => {
             const map = L.map('map').setView([20, 0], 2);
